@@ -5,6 +5,8 @@ CREATE TABLE "mutation_lock" (
     CONSTRAINT "mutation_lock_pkey" PRIMARY KEY ("id")
 );
 
+INSERT INTO "mutation_lock" ("id") VALUES (1);
+
 -- CreateTable
 CREATE TABLE "mutation_receipts" (
     "scope" TEXT NOT NULL,
@@ -309,4 +311,3 @@ ALTER TABLE "notifications" ADD CONSTRAINT "notifications_recipient_id_fkey" FOR
 
 -- AddForeignKey
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
