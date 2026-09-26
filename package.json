@@ -3,10 +3,18 @@
   "version": "1.0.0",
   "description": "Smart Travel & Business Trip Management — Monorepo root",
   "private": true,
+  "workspaces": [
+    "src/backend",
+    "src/frontend"
+  ],
   "engines": {
     "node": ">=20.0.0"
   },
   "scripts": {
+    "build": "npm --prefix src/backend run build",
+    "start": "node dist/server.js",
+    "type-check": "npm --prefix src/backend run type-check",
+    "db:migrate:prod": "npm --prefix src/backend run db:migrate:prod",
     "test:be": "npm --prefix src/backend run test:run",
     "test:fe": "npm --prefix src/frontend run test:run",
     "test:run": "npm run test:be && npm run test:fe",
@@ -22,5 +30,20 @@
     "jsonwebtoken": "9.0.3",
     "supertest": "7.2.2",
     "vitest": "5.0.1"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "express-rate-limit": "^7.5.1",
+    "groq-sdk": "^1.6.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "pdfkit": "^0.20.2",
+    "uuid": "^11.1.1",
+    "zod": "^3.25.76"
   }
 }

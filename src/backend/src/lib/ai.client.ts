@@ -135,11 +135,11 @@ const ITINERARY_RESPONSE_SCHEMA = {
 // ─── Logging / environment ────────────────────────────────────────────────────
 
 function getGroqApiKey(): string {
-  const apiKey = process.env['GROQ_API_KEY']?.trim();
+  const apiKey = process.env['GEMINI_API_KEY']?.trim();
 
   if (!apiKey) {
     logEvent('ERROR', 'AI_CONFIG_MISSING', {
-      variable: 'GROQ_API_KEY',
+      variable: 'GEMINI_API_KEY',
     });
     throw Errors.INTERNAL_ERROR();
   }

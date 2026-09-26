@@ -125,7 +125,12 @@ export function createApp(): Application {
 
   // ── 9. Frontend SPA (full-local: http://localhost:5000) ───────────────────
   // API routes luôn được đăng ký trước static middleware để không bị SPA fallback.
-  const frontendDist = path.resolve(process.cwd(), '../frontend/dist');
+  const frontendDistCandidates = [
+    path.resolve(process.cwd(), 'src/frontend/dist'),
+    path.resolve(process.cwd(), '../frontend/dist'),
+  ];
+  const frontendDist = frontendDistCandidates.find((candidate) => existsSync(path.join(candidate, 'index.html')))
+    ?? frontendDistCandidates[0];
   const frontendIndex = path.join(frontendDist, 'index.html');
   if (existsSync(frontendIndex)) {
     app.use(express.static(frontendDist));

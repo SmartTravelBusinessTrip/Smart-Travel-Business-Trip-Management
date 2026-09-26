@@ -4,14 +4,9 @@
 //
 // Tài liệu tham chiếu: docs/05-technical/data-model.md
 //
-// Database: SQLite (local dev / scaffold)
-//   → Production: đổi provider = "postgresql" và thêm @db.* type annotations
+// Database: PostgreSQL (production and Railway)
 //
-// SQLite limitations so với PostgreSQL spec:
-//   - Không hỗ trợ native ENUM → dùng String + validation ở Service layer
-//   - Không hỗ trợ BigInt natively → dùng Int (đủ cho demo, max ~2.1 tỷ VNĐ)
-//   - Không hỗ trợ @db.Timestamptz, @db.VarChar, @db.Uuid → generic types
-//   - violations/metadata dùng String (JSON serialized) thay vì Json
+// Native enums remain represented as String because the service layer owns validation.
 //
 // Prisma: v5.22.0
 // =============================================================================
@@ -21,7 +16,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
