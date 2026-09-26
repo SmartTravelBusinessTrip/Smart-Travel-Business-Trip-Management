@@ -11,7 +11,7 @@ function retryable(error: unknown): boolean {
   const e = error as { code?: string; message?: string; meta?: { code?: string } };
   return e.code === 'P2034' || e.code === 'P1008' ||
     (e.code === 'P2028' && /Unable to start a transaction|expired transaction/i.test(e.message ?? '')) ||
-    (e.code === 'P2010' && ['5', '6', '517'].includes(e.meta?.code ?? ''));
+    (e.code === 'P2010' && ['5', '6', '517', '55P03'].includes(e.meta?.code ?? ''));
 }
 
 /** SQLite canonical boundary: acquire its writer before ANY business read.
