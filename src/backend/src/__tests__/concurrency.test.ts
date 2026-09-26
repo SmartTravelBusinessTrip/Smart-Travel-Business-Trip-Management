@@ -280,12 +280,21 @@ describe('FIX-08: HTTP mutations over independent PostgreSQL connections', () =>
       await gate;
     }, { timeout: 30000 });
     await acquired;
+    let released = false;
+    const releaseHolder = () => {
+      if (!released) {
+        released = true;
+        release();
+      }
+    };
+    const releaseTimer = setTimeout(releaseHolder, 10000);
     const work = vi.fn();
     try {
       await expect(runMutation(work, undefined, harness.clients[1])).rejects.toMatchObject({ statusCode: 409, errorCode: 'CONCURRENT_MODIFICATION' });
       expect(work).not.toHaveBeenCalled();
     } finally {
-      release();
+      clearTimeout(releaseTimer);
+      releaseHolder();
       await holder;
     }
   }, 40000);
