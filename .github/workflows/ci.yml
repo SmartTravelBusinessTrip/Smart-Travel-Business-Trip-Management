@@ -8,6 +8,22 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: smart_travel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test -d smart_travel_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/smart_travel_test?schema=public
     steps:
       - uses: actions/checkout@v4
 
@@ -27,11 +43,10 @@ jobs:
 
       - name: Validate Prisma schema
         working-directory: src/backend
-        env:
-          # Schema validation only parses the datasource URL; no database connection is needed.
-          # This is a CI-only dummy URL, never a production credential.
-          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci_schema?schema=public
         run: npx prisma validate
+
+      - name: Apply test database migrations
+        run: npx prisma migrate deploy --schema src/backend/src/prisma/schema.prisma
 
       - name: Backend type-check
         run: npm --prefix src/backend run type-check
@@ -40,7 +55,7 @@ jobs:
         run: npm --prefix src/frontend run lint
 
       - name: Full test suite
-        run: npm run test:run
+        run: npm run test:be -- --pool=forks --poolOptions.forks.singleFork && npm run test:fe
 
       - name: Production build
         run: npm --prefix src/backend run build

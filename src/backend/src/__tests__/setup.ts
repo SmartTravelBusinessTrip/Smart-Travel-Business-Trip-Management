@@ -25,7 +25,7 @@ import jwt from 'jsonwebtoken';
 process.env['NODE_ENV'] = 'test';
 process.env['JWT_ACCESS_SECRET'] = 'test-jwt-access-secret-do-not-use-in-prod';
 process.env['JWT_REFRESH_SECRET'] = 'test-jwt-refresh-secret-do-not-use-in-prod';
-process.env['DATABASE_URL'] = 'file::memory:?cache=shared';
+process.env['DATABASE_URL'] ??= 'postgresql://test:test@localhost:5432/smart_travel_test?schema=public';
 process.env['PORT'] = '0'; // Port 0 → OS tự assign — tránh conflict
 process.env['CORS_ORIGIN'] = 'http://localhost:5173';
 

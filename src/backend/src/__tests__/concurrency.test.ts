@@ -1,5 +1,4 @@
 import { beforeAll, afterAll, beforeEach, describe, it, expect, vi } from 'vitest';
-import { readFileSync, readdirSync, unlinkSync, existsSync } from 'node:fs';
 import express from 'express';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
@@ -7,11 +6,10 @@ import jwt from 'jsonwebtoken';
 const harness = await vi.hoisted(async () => {
   const { AsyncLocalStorage } = await import('node:async_hooks');
   const { PrismaClient } = await import('@prisma/client');
-  const databasePath = `${process.cwd().replace(/\\/g, '/')}/fix08-${process.pid}.test.db`;
   const clients = [0, 1].map(() => new PrismaClient({
-    datasources: { db: { url: `file:${databasePath}?connection_limit=1&socket_timeout=1` } },
+    datasources: { db: { url: process.env['DATABASE_URL'] } },
   }));
-  return { clients, databasePath, context: new AsyncLocalStorage<number>() };
+  return { clients, context: new AsyncLocalStorage<number>() };
 });
 
 // Only select the connection for each request; every database operation is real.
@@ -31,6 +29,16 @@ import { runMutation } from '../services/mutation.service';
 import * as sseEmitter from '../lib/sse-emitter';
 
 const db = harness.clients[0];
+async function createFailureTrigger(name: string, table: string, event: string): Promise<void> {
+  await db.$executeRawUnsafe(`CREATE OR REPLACE FUNCTION ${name}_fn() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected failure'; END; $$`);
+  await db.$executeRawUnsafe(`CREATE TRIGGER ${name} BEFORE ${event} ON ${table} FOR EACH ROW EXECUTE FUNCTION ${name}_fn()`);
+}
+async function dropFailureTrigger(name: string, tables: string[]): Promise<void> {
+  for (const table of tables) {
+    await db.$executeRawUnsafe(`DROP TRIGGER IF EXISTS ${name} ON ${table}`);
+  }
+  await db.$executeRawUnsafe(`DROP FUNCTION IF EXISTS ${name}_fn()`);
+}
 const apps = harness.clients.map((_client, index) => {
   const app = express();
   app.use(express.json());
@@ -68,21 +76,15 @@ function oneWinner(responses: Array<{ status: number; body: { error?: string } }
 }
 
 beforeAll(async () => {
-  const migrations = new URL('../prisma/migrations/', import.meta.url);
-  for (const entry of readdirSync(migrations, { withFileTypes: true }).filter(e => e.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
-    for (const sql of readFileSync(new URL(`${entry.name}/migration.sql`, migrations), 'utf8').split(';').filter(s => s.trim())) {
-      await db.$executeRawUnsafe(sql);
-    }
-  }
   for (const [id, role] of [['manager', 'MANAGER'], ['finance', 'FINANCE'], ['admin', 'TRAVEL_ADMIN'], ['employee', 'EMPLOYEE']]) {
     await db.user.create({ data: { id, name: id, email: `${id}@fix08.test`, role, passwordHash: 'unused', ...(id === 'employee' && { managerId: 'manager' }) } });
   }
 }, 20000);
 beforeEach(async () => {
   vi.restoreAllMocks();
-  await db.$executeRawUnsafe('DROP TRIGGER IF EXISTS fail_expense_write');
-  await db.$executeRawUnsafe('DROP TRIGGER IF EXISTS fail_audit_write');
-  await db.$executeRawUnsafe('DROP TRIGGER IF EXISTS fail_notification_write');
+  await dropFailureTrigger('fail_expense_write', ['expenses', 'trips']);
+  await dropFailureTrigger('fail_audit_write', ['audit_logs']);
+  await dropFailureTrigger('fail_notification_write', ['notifications']);
   await db.$executeRawUnsafe('DELETE FROM mutation_receipts');
   await db.notification.deleteMany();
   await db.auditLog.deleteMany();
@@ -95,12 +97,9 @@ beforeEach(async () => {
 });
 afterAll(async () => {
   await Promise.all(harness.clients.map(client => client.$disconnect()));
-  for (const suffix of ['', '-journal', '-wal', '-shm']) {
-    if (existsSync(harness.databasePath + suffix)) unlinkSync(harness.databasePath + suffix);
-  }
 });
 
-describe('FIX-08: HTTP mutations over independent SQLite connections', () => {
+describe('FIX-08: HTTP mutations over independent PostgreSQL connections', () => {
   it.each(['approve', 'reject'])('two manager decisions: approve versus %s', async action => {
     await trip();
     oneWinner(await Promise.all([post(0, 'trip/approve'), post(1, `trip/${action}`, 'MANAGER', { comment: 'Decision' })]));
@@ -173,7 +172,7 @@ describe('FIX-08: HTTP mutations over independent SQLite connections', () => {
   it('Manager reapprove rolls back trip and audit when the expense write fails', async () => {
     await expense('SUBMITTED', 'MANAGER_REAPPROVE');
     await db.expense.update({ where: { id: 'expense' }, data: { managerReapprovalRequired: true } });
-    await db.$executeRawUnsafe("CREATE TRIGGER fail_expense_write BEFORE UPDATE ON expenses BEGIN SELECT RAISE(ABORT, 'injected failure'); END");
+    await createFailureTrigger('fail_expense_write', 'expenses', 'UPDATE');
     expect((await post(0, 'trip/expense/reapprove', 'MANAGER', { action: 'APPROVED' })).status).toBe(500);
     expect((await db.trip.findUniqueOrThrow({ where: { id: 'trip' } })).status).toBe('MANAGER_REAPPROVE');
     expect(await db.auditLog.count()).toBe(0);
@@ -207,18 +206,18 @@ describe('FIX-08: HTTP mutations over independent SQLite connections', () => {
   });
   it('audit insertion failure rolls back approval record and trip', async () => {
     await trip();
-    await db.$executeRawUnsafe("CREATE TRIGGER fail_audit_write BEFORE INSERT ON audit_logs BEGIN SELECT RAISE(ABORT, 'injected failure'); END");
+    await createFailureTrigger('fail_audit_write', 'audit_logs', 'INSERT');
     expect((await post(0, 'trip/approve')).status).toBe(500);
     expect(await db.approvalRecord.count()).toBe(0);
     expect((await db.trip.findUniqueOrThrow({ where: { id: 'trip' } })).status).toBe('SUBMITTED');
   });
   it('notification persistence failure rolls back; SSE failure after commit does not fail HTTP', async () => {
     await trip();
-    await db.$executeRawUnsafe("CREATE TRIGGER fail_notification_write BEFORE INSERT ON notifications BEGIN SELECT RAISE(ABORT, 'injected failure'); END");
+    await createFailureTrigger('fail_notification_write', 'notifications', 'INSERT');
     expect((await post(0, 'trip/approve')).status).toBe(500);
     expect(await db.auditLog.count()).toBe(0);
     expect(await db.approvalRecord.count()).toBe(0);
-    await db.$executeRawUnsafe('DROP TRIGGER fail_notification_write');
+    await dropFailureTrigger('fail_notification_write', ['notifications']);
     vi.spyOn(sseEmitter, 'emit').mockImplementation(() => { throw new Error('disconnected'); });
     expect((await post(0, 'trip/approve')).status).toBe(200);
     expect(await db.notification.count()).toBe(1);
@@ -305,21 +304,21 @@ describe('FIX-08: HTTP mutations over independent SQLite connections', () => {
   });
   it('expense creation rolls back if switching the trip status fails', async () => {
     await trip('ONGOING');
-    await db.$executeRawUnsafe("CREATE TRIGGER fail_expense_write BEFORE UPDATE ON trips BEGIN SELECT RAISE(ABORT, 'injected failure'); END");
+    await createFailureTrigger('fail_expense_write', 'trips', 'UPDATE');
     expect((await post(0, 'trip/expense', 'EMPLOYEE')).status).toBe(500);
     expect(await db.expense.count()).toBe(0);
     expect((await db.trip.findUniqueOrThrow({ where: { id: 'trip' } })).status).toBe('ONGOING');
   });
   it('expense item insertion rolls back if recalculating total fails', async () => {
     await expense('DRAFT', 'EXPENSE_DRAFT');
-    await db.$executeRawUnsafe("CREATE TRIGGER fail_expense_write BEFORE UPDATE ON expenses BEGIN SELECT RAISE(ABORT, 'injected failure'); END");
+    await createFailureTrigger('fail_expense_write', 'expenses', 'UPDATE');
     expect((await post(0, 'trip/expense/items', 'EMPLOYEE', expenseItem)).status).toBe(500);
     expect(await db.expenseItem.count()).toBe(1);
     expect((await db.expense.findUniqueOrThrow({ where: { id: 'expense' } })).totalActual).toBe(100);
   });
   it('close rolls back trip if the expense write fails, preserving the real error', async () => {
     await expense('APPROVED', 'EXPENSE_APPROVED');
-    await db.$executeRawUnsafe("CREATE TRIGGER fail_expense_write BEFORE UPDATE ON expenses BEGIN SELECT RAISE(ABORT, 'injected failure'); END");
+    await createFailureTrigger('fail_expense_write', 'expenses', 'UPDATE');
     expect((await post(0, 'trip/close', 'FINANCE')).status).toBe(500);
     expect((await db.trip.findUniqueOrThrow({ where: { id: 'trip' } })).status).toBe('EXPENSE_APPROVED');
     expect(await db.auditLog.count()).toBe(0);
@@ -373,11 +372,11 @@ describe('FIX-08: HTTP mutations over independent SQLite connections', () => {
   });
   it('failed AI transaction leaves no receipt, so the same key can be retried', async () => {
     await trip('DRAFT');
-    await db.$executeRawUnsafe("CREATE TRIGGER fail_audit_write BEFORE INSERT ON audit_logs BEGIN SELECT RAISE(ABORT, 'injected failure'); END");
+    await createFailureTrigger('fail_audit_write', 'audit_logs', 'INSERT');
     expect((await post(0, 'trip/itinerary', 'EMPLOYEE', { items: [aiItem] }).set('Idempotency-Key', 'retryable-intent')).status).toBe(500);
     expect(await db.itineraryItem.count()).toBe(0);
     expect(await db.$queryRaw`SELECT * FROM mutation_receipts`).toEqual([]);
-    await db.$executeRawUnsafe('DROP TRIGGER fail_audit_write');
+    await dropFailureTrigger('fail_audit_write', ['audit_logs']);
     expect((await post(1, 'trip/itinerary', 'EMPLOYEE', { items: [aiItem] }).set('Idempotency-Key', 'retryable-intent')).status).toBe(201);
     expect(await db.itineraryItem.count()).toBe(1);
     expect(await db.auditLog.count()).toBe(1);

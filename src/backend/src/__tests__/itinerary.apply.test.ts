@@ -1,5 +1,4 @@
 import { beforeAll, afterAll, beforeEach, describe, it, expect, vi } from 'vitest';
-import { readFileSync, readdirSync, unlinkSync } from 'node:fs';
 import prisma from '../prisma/client';
 import { addItineraryItem, addBatchItineraryItems, getItinerary, updateItineraryItem, deleteItineraryItem } from '../services/itinerary.service';
 import { AuditActions } from '../services/audit.service';
@@ -7,26 +6,12 @@ import express from 'express';
 import request from 'supertest';
 import { addItineraryItem as addController } from '../controllers/itinerary.controller';
 
-const { databasePath } = vi.hoisted(() => ({ databasePath: `${process.cwd().replace(/\\/g, '/')}/fix06-${process.pid}.test.db` }));
-vi.mock('../prisma/client', async () => {
-  const { PrismaClient } = await import('@prisma/client');
-  return { default: new PrismaClient({ datasources: { db: { url: `file:${databasePath}` } } }) };
-});
-
 const input = {
   itemDate: '2026-10-01', timeSlot: 'MORNING', location: 'Office',
   activity: 'Meeting', category: 'MEETING', estimatedCost: 120000,
 };
 
 beforeAll(async () => {
-  // A real, isolated SQLite file; never touch the application's database.
-  const migrations = new URL('../prisma/migrations/', import.meta.url);
-  for (const dir of readdirSync(migrations, { withFileTypes: true }).filter(entry => entry.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
-    const migration = readFileSync(new URL(`${dir.name}/migration.sql`, migrations), 'utf8');
-    for (const statement of migration.split(';').filter(sql => sql.trim())) {
-      await prisma.$executeRawUnsafe(statement);
-    }
-  }
   await prisma.user.create({ data: {
     id: 'fix06-user', name: 'FIX-06', email: 'fix06@example.test', passwordHash: 'unused', role: 'EMPLOYEE',
   } });
@@ -40,9 +25,9 @@ beforeEach(async () => {
   await prisma.itineraryItem.deleteMany();
   await prisma.auditLog.deleteMany();
 });
-afterAll(async () => { await prisma.$disconnect(); unlinkSync(databasePath); });
+afterAll(async () => { await prisma.$disconnect(); });
 
-describe('FIX-06 AI itinerary apply (real SQLite)', () => {
+describe('FIX-06 AI itinerary apply (real PostgreSQL test database)', () => {
   it('accepts batch and existing single-item payloads on the same POST endpoint', async () => {
     const app = express();
     app.use(express.json());
