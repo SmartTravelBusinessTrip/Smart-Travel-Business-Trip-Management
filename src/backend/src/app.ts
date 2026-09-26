@@ -128,6 +128,10 @@ export function createApp(): Application {
   // ── 9. Frontend SPA (full-local: http://localhost:5000) ───────────────────
   // API routes luôn được đăng ký trước static middleware để không bị SPA fallback.
   const frontendDistCandidates = [
+    // Resolved from the compiled server location (repo/dist) on Railway.
+    path.resolve(__dirname, '../src/frontend/dist'),
+    // Resolved from the source location when running through tsx locally.
+    path.resolve(__dirname, '../../frontend/dist'),
     path.resolve(process.cwd(), 'src/frontend/dist'),
     path.resolve(process.cwd(), '../frontend/dist'),
   ];
