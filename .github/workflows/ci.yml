@@ -27,6 +27,10 @@ jobs:
 
       - name: Validate Prisma schema
         working-directory: src/backend
+        env:
+          # Schema validation only parses the datasource URL; no database connection is needed.
+          # This is a CI-only dummy URL, never a production credential.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci_schema?schema=public
         run: npx prisma validate
 
       - name: Backend type-check
