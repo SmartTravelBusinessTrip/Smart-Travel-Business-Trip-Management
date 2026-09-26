@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "npm run build:frontend && tsc",
+    "build": "npm run db:generate && npm run build:frontend && tsc",
     "build:frontend": "npm --prefix ../frontend run build",
     "start": "node ../../dist/server.js",
     "type-check": "tsc --noEmit",
