@@ -35,6 +35,8 @@ import pdfRouter from './routes/pdf.routes';
 export function createApp(): Application {
   const app = express();
 
+  app.set('trust proxy', 1);
+
   // ── 1. Security Headers (helmet trước tất cả) ──────────────────────────────
   app.use(
     helmet({
