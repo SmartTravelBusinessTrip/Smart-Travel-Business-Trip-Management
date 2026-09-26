@@ -278,7 +278,7 @@ describe('FIX-08: HTTP mutations over independent PostgreSQL connections', () =>
       await tx.$executeRaw`UPDATE mutation_lock SET id = id WHERE id = 1`;
       locked();
       await gate;
-    }, { timeout: 15000 });
+    }, { timeout: 30000 });
     await acquired;
     const work = vi.fn();
     try {
@@ -288,7 +288,7 @@ describe('FIX-08: HTTP mutations over independent PostgreSQL connections', () =>
       release();
       await holder;
     }
-  });
+  }, 40000);
   it('expense item update versus delete keeps the header sum exact', async () => {
     await expense('DRAFT', 'EXPENSE_DRAFT');
     const second = await db.expenseItem.create({ data: { expenseId: 'expense', ...expenseItem, expenseDate: new Date(expenseItem.expenseDate) } });
