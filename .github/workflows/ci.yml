@@ -45,6 +45,10 @@ jobs:
         working-directory: src/backend
         run: npx prisma validate
 
+      - name: Generate Prisma client
+        working-directory: src/backend
+        run: npx prisma generate
+
       - name: Apply test database migrations
         run: npx prisma migrate deploy --schema src/backend/src/prisma/schema.prisma
 
