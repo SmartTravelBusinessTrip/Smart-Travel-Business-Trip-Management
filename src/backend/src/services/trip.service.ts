@@ -62,9 +62,10 @@ async function generateTripCode(tx: Prisma.TransactionClient): Promise<string> {
   const year = new Date().getFullYear();
   const prefix = 'TR-' + year + '-';
   // Seed from existing codes on first use; retained counter prevents reuse after deletion.
-  await tx.$executeRaw`INSERT OR IGNORE INTO trip_code_sequences (year, value)
-    SELECT ${year}, COALESCE(MAX(CAST(SUBSTR(trip_code, 9) AS INTEGER)), 0)
-    FROM trips WHERE trip_code LIKE ${prefix + '%'}`;
+  await tx.$executeRaw`INSERT INTO trip_code_sequences (year, value)
+    SELECT ${year}, COALESCE(MAX(CAST(SUBSTRING(trip_code FROM 9) AS INTEGER)), 0)
+    FROM trips WHERE trip_code LIKE ${prefix + '%'}
+    ON CONFLICT (year) DO NOTHING`;
   await tx.$executeRaw`UPDATE trip_code_sequences SET value = value + 1 WHERE year = ${year}`;
   const rows = await tx.$queryRaw<Array<{ value: number | bigint }>>`SELECT value FROM trip_code_sequences WHERE year = ${year}`;
   return prefix + String(rows[0].value).padStart(4, '0');

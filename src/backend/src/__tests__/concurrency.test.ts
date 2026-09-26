@@ -278,7 +278,7 @@ describe('FIX-08: HTTP mutations over independent PostgreSQL connections', () =>
       await tx.$executeRaw`UPDATE mutation_lock SET id = id WHERE id = 1`;
       locked();
       await gate;
-    }, { timeout: 12000 });
+    }, { timeout: 15000 });
     await acquired;
     const work = vi.fn();
     try {
