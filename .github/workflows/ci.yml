@@ -54,8 +54,16 @@ jobs:
       - name: Frontend lint
         run: npm --prefix src/frontend run lint
 
-      - name: Full test suite
-        run: npm run test:be -- --pool=forks --poolOptions.forks.singleFork && npm run test:fe
+      - name: Backend unit tests (provider mocked)
+        env:
+          GEMINI_API_KEY: ''
+        run: npm --prefix src/backend run test:unit
+
+      - name: Backend PostgreSQL integration tests
+        run: npm --prefix src/backend run test:integration -- --pool=forks --poolOptions.forks.singleFork
+
+      - name: Frontend tests
+        run: npm run test:fe
 
       - name: Production build
         run: npm --prefix src/backend run build

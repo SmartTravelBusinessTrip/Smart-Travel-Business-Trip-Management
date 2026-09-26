@@ -3,12 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const geminiMocks = vi.hoisted(() => ({
   generateContent: vi.fn(),
 }));
+const fetchMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@google/genai', () => ({
   GoogleGenAI: class {
     models = { generateContent: geminiMocks.generateContent };
   },
 }));
+
+vi.stubGlobal('fetch', fetchMock);
 
 const response = (draft: unknown) => ({
   text: JSON.stringify(draft),
@@ -62,6 +65,17 @@ describe('Gemini itinerary client', () => {
     vi.clearAllMocks();
     process.env['GEMINI_API_KEY'] = 'test-gemini-key';
     geminiMocks.generateContent.mockResolvedValue(response(validDraft));
+    fetchMock.mockImplementation(async (_url: string, init: RequestInit) => {
+      const request = JSON.parse(String(init.body)) as { messages: Array<{ content: string }> };
+      const mockedResponse = await geminiMocks.generateContent({
+        model: 'openai/gpt-oss-20b',
+        contents: request.messages[1]?.content ?? '',
+        config: { responseMimeType: 'application/json' },
+      });
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: mockedResponse.text } }],
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
   });
 
   it('requests structured JSON and includes validated policy references in the prompt', async () => {
@@ -71,14 +85,14 @@ describe('Gemini itinerary client', () => {
 
     expect(result.totalEstimatedCost).toBe(200_000);
     expect(result.guardrailPass).toBe(true);
-    expect(request).toEqual(expect.objectContaining({ model: 'gemini-3.8-flash', config: expect.objectContaining({ responseMimeType: 'application/json' }) }));
+    expect(request).toEqual(expect.objectContaining({ model: 'openai/gpt-oss-20b', config: expect.objectContaining({ responseMimeType: 'application/json' }) }));
     expect(prompt).toContain('1.000.000 VNĐ/đêm');
     expect(prompt).toContain('400.000 VNĐ/ngày');
     expect(prompt).toContain('Customer meeting');
     expect(prompt).toContain('Quiet hotel');
     expect(prompt).toContain('Điểm xuất phát: Da Nang');
-    expect(prompt).toContain('Ngày về của Trip Request: 2026-10-06');
-    expect(prompt).toContain('Ngày cuối cửa sổ AI: 2026-10-05');
+    expect(prompt).toContain('Trip Request: 2026-10-05 đến 2026-10-06');
+    expect(prompt).toContain('Cửa sổ lịch trình AI: 2026-10-05 đến 2026-10-05 (1 ngày)');
   });
 
   it('handles absent optional preferences without inventing a value', async () => {
@@ -124,7 +138,7 @@ describe('Gemini itinerary client', () => {
   });
 
   it('rejects malformed calendar dates and incomplete day coverage', async () => {
-    geminiMocks.generateContent.mockResolvedValueOnce({
+    geminiMocks.generateContent.mockResolvedValue({
       text: JSON.stringify({
         ...validDraft,
         items: validDraft.items.map(item => ({ ...item, date: '2026-02-30' })),
@@ -132,7 +146,7 @@ describe('Gemini itinerary client', () => {
     });
     await expect(generateItinerary(input)).rejects.toMatchObject({ errorCode: 'INTERNAL_SERVER_ERROR' });
 
-    geminiMocks.generateContent.mockResolvedValueOnce({
+    geminiMocks.generateContent.mockResolvedValue({
       text: JSON.stringify({
         items: Array.from({ length: 4 }, (_, index) => ({
           ...validDraft.items[index % validDraft.items.length],
@@ -143,7 +157,7 @@ describe('Gemini itinerary client', () => {
     });
     await expect(generateItinerary({ ...input, days: 2 })).rejects.toMatchObject({ errorCode: 'INTERNAL_SERVER_ERROR' });
 
-    geminiMocks.generateContent.mockResolvedValueOnce({
+    geminiMocks.generateContent.mockResolvedValue({
       text: JSON.stringify({
         ...validDraft,
         items: validDraft.items.map(item => ({ ...item, date: '2026-10-06', dayNumber: 2 })),
@@ -151,7 +165,7 @@ describe('Gemini itinerary client', () => {
     });
     await expect(generateItinerary(input)).rejects.toMatchObject({ errorCode: 'INTERNAL_SERVER_ERROR' });
 
-    geminiMocks.generateContent.mockResolvedValueOnce({
+    geminiMocks.generateContent.mockResolvedValue({
       text: 'not JSON',
     });
     await expect(generateItinerary(input)).rejects.toMatchObject({ errorCode: 'INTERNAL_SERVER_ERROR' });
@@ -167,7 +181,7 @@ describe('Gemini itinerary client', () => {
 
     await expect(generateItinerary(input)).rejects.toMatchObject({ errorCode: 'AI_BUDGET_GUARDRAIL_FAILED' });
     expect(geminiMocks.generateContent).toHaveBeenCalledTimes(3);
-    expect(geminiMocks.generateContent.mock.calls[1][0].contents).toContain('RÀNG BUỘC CỨNG');
+    expect(geminiMocks.generateContent.mock.calls[1][0].contents).toContain('RÀNG BUỘC RETRY');
   });
 
   it('retries transient 503 responses with backoff and succeeds when Gemini recovers', async () => {
