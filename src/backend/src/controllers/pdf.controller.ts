@@ -12,6 +12,11 @@ import { Request, Response, NextFunction } from 'express';
 import PDFDocument from 'pdfkit';
 import prisma from '../prisma/client';
 import { Errors } from '../middlewares/error-handler';
+import type { Prisma } from '@prisma/client';
+
+type PdfItineraryItem = Prisma.ItineraryItemGetPayload<{}>;
+type PdfExpenseItem = Prisma.ExpenseItemGetPayload<{}>;
+type PdfApprovalRecord = Prisma.ApprovalRecordGetPayload<{ include: { approver: { select: { name: true; role: true } } } }>;
 
 const PDF_ALLOWED_STATUSES = ['APPROVED', 'ONGOING', 'EXPENSE_SUBMITTED', 'EXPENSE_APPROVED', 'CLOSED'];
 
@@ -209,7 +214,7 @@ export async function exportTripPdf(req: Request, res: Response, next: NextFunct
         { header: 'Hoat dong', width: Math.round(totalW * 0.34) },
         { header: 'Chi phi', width: Math.round(totalW * 0.16), align: 'right' },
       ],
-      trip.itineraryItems.map(i => [
+      trip.itineraryItems.map((i: PdfItineraryItem) => [
         String(i.dayNumber),
         fmtTimeSlot(i.timeSlot),
         i.location,
@@ -242,7 +247,7 @@ export async function exportTripPdf(req: Request, res: Response, next: NextFunct
           { header: 'Mo ta', width: Math.round(totalW * 0.46) },
           { header: 'So tien', width: Math.round(totalW * 0.22), align: 'right' },
         ],
-        exp.items.map(e => [
+        exp.items.map((e: PdfExpenseItem) => [
           fmtDate(e.expenseDate),
           fmtCategory(e.category),
           e.description,
@@ -263,7 +268,7 @@ export async function exportTripPdf(req: Request, res: Response, next: NextFunct
         { header: 'Ghi chu', width: Math.round(totalW * 0.30) },
         { header: 'Thoi gian', width: Math.round(totalW * 0.18) },
       ],
-      trip.approvalRecords.map(a => [
+      trip.approvalRecords.map((a: PdfApprovalRecord) => [
         a.approver.name,
         fmtApprovalLevel(a.approvalLevel),
         fmtAction(a.action),

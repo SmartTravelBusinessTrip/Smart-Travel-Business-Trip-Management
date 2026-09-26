@@ -39,7 +39,7 @@ export async function runMutation<T>(
     const effects: Array<() => void | Promise<void>> = [];
     let result: T;
     try {
-      result = await client.$transaction(async tx => {
+      result = await client.$transaction(async (tx: Prisma.TransactionClient) => {
         const locked = await tx.$executeRaw`UPDATE mutation_lock SET id = id WHERE id = 1`;
         if (locked !== 1) throw new Error('Missing mutation_lock singleton; run migrations');
         if (receipt?.key) {

@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../prisma/client';
 import { Errors } from '../middlewares/error-handler';
+import type { Prisma } from '@prisma/client';
+
+type EmployeeTrip = Prisma.TripGetPayload<{ select: { status: true; id: true; destination: true; departureDate: true; estimatedBudget: true } }>;
+type StatusCount = { status: string; _count: { _all: number } };
 
 export async function getDashboard(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -12,7 +16,7 @@ export async function getDashboard(req: Request, res: Response, next: NextFuncti
     if (role === 'EMPLOYEE') {
       const trips = await prisma.trip.findMany({ where: { employeeId: userId }, select: { status: true, id: true, destination: true, departureDate: true, estimatedBudget: true } });
       const byStatus: Record<string, number> = {};
-      trips.forEach(t => { byStatus[t.status] = (byStatus[t.status] ?? 0) + 1; });
+      trips.forEach((t: EmployeeTrip) => { byStatus[t.status] = (byStatus[t.status] ?? 0) + 1; });
       const pendingExpense = await prisma.expense.count({ where: { trip: { employeeId: userId }, status: 'DRAFT' } });
       const pendingApproval = await prisma.expense.count({ where: { trip: { employeeId: userId }, status: 'SUBMITTED' } });
       res.json({ role, myTrips: { total: trips.length, byStatus, recentTrips: trips.slice(0, 5) }, myExpenses: { pendingSubmission: pendingExpense, pendingApproval }, notifications: { unreadCount } });
@@ -23,7 +27,7 @@ export async function getDashboard(req: Request, res: Response, next: NextFuncti
       const pendingTrips = await prisma.trip.findMany({ where: { employee: { managerId: userId }, status: 'SUBMITTED' }, include: { employee: { select: { name: true } } }, take: 10 });
       const teamTrips = await prisma.trip.groupBy({ by: ['status'], where: { employee: { managerId: userId } }, _count: { _all: true } });
       const byStatus: Record<string, number> = {};
-      teamTrips.forEach(t => { byStatus[t.status] = t._count._all; });
+      teamTrips.forEach((t: StatusCount) => { byStatus[t.status] = t._count._all; });
       const total = Object.values(byStatus).reduce((a, b) => a + b, 0);
       res.json({ role, pendingApprovals: { count: pendingTrips.length, trips: pendingTrips }, teamTrips: { total, byStatus }, notifications: { unreadCount } });
       return;
@@ -33,7 +37,7 @@ export async function getDashboard(req: Request, res: Response, next: NextFuncti
       const pendingL2 = await prisma.trip.findMany({ where: { status: 'PENDING_ADMIN_APPROVAL' }, include: { employee: { select: { name: true } } }, take: 10 });
       const allTrips = await prisma.trip.groupBy({ by: ['status'], _count: { _all: true } });
       const byStatus: Record<string, number> = {};
-      allTrips.forEach(t => { byStatus[t.status] = t._count._all; });
+      allTrips.forEach((t: StatusCount) => { byStatus[t.status] = t._count._all; });
       res.json({ role, pendingL2Approvals: { count: pendingL2.length, trips: pendingL2 }, allTrips: { byStatus }, notifications: { unreadCount } });
       return;
     }

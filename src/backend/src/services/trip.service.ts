@@ -25,6 +25,16 @@ import { calculateTripDays } from '../utils/date.utils';
 import type { CreateTripInput } from '../utils/validators/trip.validator';
 import { Errors } from '../middlewares/error-handler';
 
+type TripListItem = Prisma.TripGetPayload<{
+  include: {
+    employee: { select: { id: true; name: true; department: true; jobGrade: true } };
+    approvalRecords: {
+      where: { approvalLevel: 'LEVEL_1'; action: 'APPROVED' };
+      include: { approver: { select: { id: true; name: true } } };
+    };
+  };
+}>;
+
 // ─── Valid Trip Status Transitions ────────────────────────────────────────────
 export const VALID_TRANSITIONS: Record<string, string[]> = {
   DRAFT:                  ['SUBMITTED'],
@@ -202,7 +212,7 @@ export async function getAllTrips(
   ]);
 
   return {
-    trips: trips.map(t => {
+    trips: trips.map((t: TripListItem) => {
       const formatted = formatTrip(t as unknown as Record<string, unknown>);
       const l1 = (t.approvalRecords as Array<{ approver: { name: string }; comment: string | null; actedAt: Date }>)[0];
       return {

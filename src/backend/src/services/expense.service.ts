@@ -354,7 +354,7 @@ export async function submitExpense(tripId: string, userId: string, ipAddress?: 
       });
 
     // Tính variance theo BR-TR-05
-    const totalActual = expense.items.reduce((sum, item) => sum + item.amount, 0);
+    const totalActual = expense.items.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0);
     const variance = calculateVariance(totalActual, expense.estimatedBudgetSnapshot);
 
     // BR-TR-05: MỌI mức vượt dự toán (giá trị thô) đều bắt buộc nhập justification
