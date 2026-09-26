@@ -10,7 +10,7 @@ function retryable(error: unknown): boolean {
   if (error instanceof AppError || !error || typeof error !== 'object') return false;
   const e = error as { code?: string; message?: string; meta?: { code?: string } };
   return e.code === 'P2034' || e.code === 'P1008' ||
-    (e.code === 'P2028' && /Unable to start a transaction/i.test(e.message ?? '')) ||
+    (e.code === 'P2028' && /Unable to start a transaction|expired transaction/i.test(e.message ?? '')) ||
     (e.code === 'P2010' && ['5', '6', '517'].includes(e.meta?.code ?? ''));
 }
 
