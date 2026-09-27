@@ -103,6 +103,33 @@ async function refreshAccessToken(): Promise<void> {
   setAccessToken(result.accessToken);
 }
 
+export async function downloadApiFile(path: string, filename: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    credentials: 'include',
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  });
+  if (response.status === 401) {
+    const payload = await response.clone().json().catch(() => ({})) as ApiErrorBody;
+    if (payload.error === 'TOKEN_EXPIRED') {
+      await refreshAccessToken();
+      return downloadApiFile(path, filename);
+    }
+  }
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({})) as ApiErrorBody;
+    throw new ApiError(response.status, payload);
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
 export const authApi = {
   async login(email: string, password: string): Promise<BackendUser> {
     const result = await request<LoginResponse>('/auth/login', {

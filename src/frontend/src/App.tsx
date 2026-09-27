@@ -1,6 +1,6 @@
 ﻿import { useState, useRef, useEffect } from "react";
 import { Navigate, Route, Routes, useNavigate, useSearchParams } from "react-router-dom";
-import { ApiError, authApi, getAccessToken, type BackendUser } from "./services/api";
+import { ApiError, authApi, downloadApiFile, getAccessToken, type BackendUser } from "./services/api";
 import { listTrips, createTrip, updateTrip, getTripById, submitTrip, approveTrip, rejectTrip, closeTrip, startTrip, endTrip, type BackendTrip, type ApprovalReason, type Level1Approval } from "./services/trips";
 import { ApprovalReasonsBanner, TwoLevelBadge } from "./components/ApprovalReasonsBanner";
 import { generateItinerary as generateAiItinerary, type AiItineraryItem } from "./services/ai";
@@ -21,7 +21,7 @@ import {
 } from "./services/itinerary";
 import {
   getExpense, createExpense, addExpenseItem, updateExpenseJustification,
-  submitExpense, approveExpense, rejectExpense, reapproveExpense,
+  submitExpense, approveExpense, reapproveExpense,
   type BackendExpense, type ExpenseCategory,
 } from "./services/expenses";
 import { PolicyBanner } from "./components/PolicyBanner";
@@ -41,7 +41,7 @@ type TripStatus =
   | "PENDING_ADMIN_APPROVAL"
   | "APPROVED" | "REJECTED"
   | "TRIP_IN_PROGRESS"
-  | "EXPENSE_DRAFT"
+  | "EXPENSE_DRAFT" | "EXPENSE_REJECTED"
   | "EXPENSE_SUBMITTED"
   | "PENDING_MANAGER_ADDITIONAL_APPROVAL"
   | "EXPENSE_APPROVED"   // BUG-03: Finance approve expense xong nhưng trip chưa CLOSED
@@ -51,7 +51,7 @@ type TripStatus =
 
 type ExpenseItem = {
   id: string; date: string; category: string; label: string;
-  description: string; budgeted: number; actual: number; receipt?: string;
+  description: string; budgeted: number | null; actual: number; receipt?: string;
 };
 
 type Trip = {
@@ -272,7 +272,7 @@ function toFrontendTrip(trip: BackendTrip): Trip {
     EXPENSE_DRAFT:            "EXPENSE_DRAFT",   // tách riêng với ONGOING — "Chờ khai chi phí"
     EXPENSE_SUBMITTED:        "EXPENSE_SUBMITTED",
     EXPENSE_APPROVED:         "EXPENSE_APPROVED",  // BUG-03: trạng thái riêng, chưa phải CLOSED
-    EXPENSE_REJECTED:         "EXPENSE_SUBMITTED", // bị reject → employee sửa lại
+    EXPENSE_REJECTED:         "EXPENSE_REJECTED", // bị reject → employee sửa lại
     MANAGER_REAPPROVE:        "PENDING_MANAGER_ADDITIONAL_APPROVAL",
     CLOSED:                   "CLOSED",
     REJECTED:                 "REJECTED",
@@ -429,6 +429,7 @@ const STATUS_LABEL: Record<TripStatus, string> = {
   APPROVED:                            "Đã duyệt",
   TRIP_IN_PROGRESS:                    "Đang thực hiện",
   EXPENSE_DRAFT:                       "Chờ khai chi phí",
+  EXPENSE_REJECTED:                   "Cần bổ sung chi phí",
   REJECTED:                            "Từ chối",
   EXPENSE_SUBMITTED:                   "Đang quyết toán",
   PENDING_MANAGER_ADDITIONAL_APPROVAL: "Chờ Manager duyệt bổ sung",
@@ -443,6 +444,7 @@ const STATUS_STYLE: Record<TripStatus, string> = {
   APPROVED:                            "bg-emerald-100 text-emerald-700 border border-emerald-200",
   TRIP_IN_PROGRESS:                    "bg-cyan-100 text-cyan-700 border border-cyan-200",
   EXPENSE_DRAFT:                       "bg-cyan-100 text-cyan-700 border border-cyan-200",
+  EXPENSE_REJECTED:                   "bg-red-100 text-red-600 border border-red-200",
   REJECTED:                            "bg-red-100 text-red-600 border border-red-200",
   EXPENSE_SUBMITTED:                   "bg-purple-100 text-purple-700 border border-purple-200",
   PENDING_MANAGER_ADDITIONAL_APPROVAL: "bg-orange-100 text-orange-700 border border-orange-200",
@@ -662,9 +664,14 @@ const PDF_EXPORT_ALLOWED_STATUSES: TripStatus[] = [
   "APPROVED", "TRIP_IN_PROGRESS", "EXPENSE_SUBMITTED", "EXPENSE_APPROVED", "CLOSED",
 ];
 
-function ExportBtn({ label = "Xuất PDF" }: { label?: string }) {
+function ExportBtn({ tripId, label = "Xuất PDF" }: { tripId: string; label?: string }) {
   const [exporting, setExporting] = useState(false);
-  function handle() { setExporting(true); setTimeout(() => { setExporting(false); window.print(); }, 400); }
+  async function handle() {
+    setExporting(true);
+    try { await downloadApiFile(`/trips/${tripId}/export-pdf`, `${tripId}.pdf`); }
+    catch (err) { alert(err instanceof Error ? err.message : "Không thể xuất PDF."); }
+    finally { setExporting(false); }
+  }
   return (
     <button onClick={handle} disabled={exporting} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-60">
       {exporting
@@ -1198,8 +1205,7 @@ function ExpenseReviewPanel({ tripId }: { tripId: string }) {
 }
 
 
-function VarianceTable({ items }: { items: ExpenseItem[] }) {
-  const totalBudget = items.reduce((s, i) => s + i.budgeted, 0);
+function VarianceTable({ items, totalBudget }: { items: ExpenseItem[]; totalBudget: number }) {
   const totalActual = items.reduce((s, i) => s + i.actual,   0);
   const totalDiff   = totalActual - totalBudget;
   const totalPct    = totalBudget > 0 ? ((totalDiff / totalBudget) * 100).toFixed(1) : "—";
@@ -1219,21 +1225,21 @@ function VarianceTable({ items }: { items: ExpenseItem[] }) {
         </thead>
         <tbody>
           {items.map(item => {
-            const diff = item.actual - item.budgeted;
-            const pct  = item.budgeted > 0 ? ((diff / item.budgeted) * 100).toFixed(1) : item.actual > 0 ? "+inf" : "0";
+            const diff = item.budgeted == null ? null : item.actual - item.budgeted;
+            const pct  = item.budgeted != null && item.budgeted > 0 ? ((diff! / item.budgeted) * 100).toFixed(1) : null;
             return (
               <tr key={item.id} className="border-b border-gray-50">
                 <td className="py-2.5 pr-4">
                   <p className="font-medium text-[#1b2f35]">{item.label}</p>
                   <p className="text-xs text-gray-400">{catLabel(item.category)}{item.description ? ` · ${item.description}` : ""}</p>
                 </td>
-                <td className="py-2.5 px-3 text-right text-gray-500">{item.budgeted.toLocaleString("vi-VN")}đ</td>
-                <td className={`py-2.5 px-3 text-right font-semibold ${item.actual > item.budgeted ? "text-red-600" : "text-emerald-700"}`}>{item.actual.toLocaleString("vi-VN")}đ</td>
-                <td className={`py-2.5 pl-3 text-right font-semibold ${diff > 0 ? "text-red-500" : diff < 0 ? "text-emerald-600" : "text-gray-400"}`}>
-                  {diff > 0 ? `+${diff.toLocaleString("vi-VN")}` : diff < 0 ? `-${Math.abs(diff).toLocaleString("vi-VN")}` : "—"}đ
+                <td className="py-2.5 px-3 text-right text-gray-500">{item.budgeted == null ? "—" : `${item.budgeted.toLocaleString("vi-VN")}đ`}</td>
+                <td className={`py-2.5 px-3 text-right font-semibold ${item.budgeted != null && item.actual > item.budgeted ? "text-red-600" : "text-emerald-700"}`}>{item.actual.toLocaleString("vi-VN")}đ</td>
+                <td className={`py-2.5 pl-3 text-right font-semibold ${diff != null && diff > 0 ? "text-red-500" : diff != null && diff < 0 ? "text-emerald-600" : "text-gray-400"}`}>
+                  {diff == null ? "—" : diff > 0 ? `+${diff.toLocaleString("vi-VN")}` : diff < 0 ? `-${Math.abs(diff).toLocaleString("vi-VN")}` : "—"}{diff == null ? "" : "đ"}
                 </td>
-                <td className={`py-2.5 pl-3 text-right text-[11px] font-bold ${diff > 0 ? "text-red-500" : diff < 0 ? "text-emerald-600" : "text-gray-400"}`}>
-                  {diff !== 0 ? `${diff > 0 ? "+" : ""}${pct}%` : "—"}
+                <td className={`py-2.5 pl-3 text-right text-[11px] font-bold ${diff != null && diff > 0 ? "text-red-500" : diff != null && diff < 0 ? "text-emerald-600" : "text-gray-400"}`}>
+                  {pct == null ? "—" : `${diff! > 0 ? "+" : ""}${pct}%`}
                 </td>
               </tr>
             );
@@ -1950,7 +1956,7 @@ function EmpItinerary({ user, onLogout, trip, onBack }: { user: User; onLogout: 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <Nav user={user} onLogout={onLogout} />
-      <PageHeader label={trip.tripCode} title={`${trip.from} — ${trip.to}`} subtitle={`${trip.departDate} – ${trip.returnDate} · Lịch trình`} action={PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn /> : undefined} />
+      <PageHeader label={trip.tripCode} title={`${trip.from} — ${trip.to}`} subtitle={`${trip.departDate} – ${trip.returnDate} · Lịch trình`} action={PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn tripId={trip.id} /> : undefined} />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
         <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">Về Dashboard</button></div>
         <Card className="p-6 sm:p-8 max-w-2xl">
@@ -2098,7 +2104,7 @@ function EmpExpense({ user, onLogout, trip, onBack, onSave }: {
     category: mapBackendCategory(i.category),
     label: i.description,
     description: i.description,
-    budgeted: 0,            // backend expense model has no per-item budget
+    budgeted: null,         // backend expense model has no per-item budget
     actual: i.amount,
     receipt: i.receiptUrl ?? "",
   }));
@@ -2158,7 +2164,7 @@ function EmpExpense({ user, onLogout, trip, onBack, onSave }: {
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <Nav user={user} onLogout={onLogout} />
-      <PageHeader label={trip.tripCode} title="Khai báo chi phí thực tế" subtitle={`${trip.from} — ${trip.to} · ${trip.departDate} – ${trip.returnDate}`} action={PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn /> : undefined} />
+      <PageHeader label={trip.tripCode} title="Khai báo chi phí thực tế" subtitle={`${trip.from} — ${trip.to} · ${trip.departDate} – ${trip.returnDate}`} action={PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn tripId={trip.id} /> : undefined} />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
         <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">Về Dashboard</button></div>
         {readOnly && (
@@ -2269,7 +2275,7 @@ function ManagerApp({ user, onLogout }: { user: User; onLogout: () => void }) {
 
   if (detailTrip) return <EmpStatus user={user} onLogout={onLogout} trip={detailTrip} onBack={() => setSearchParams({})} />;
   if (selected) return <ApprovalDetail user={user} onLogout={onLogout} trip={selected} level={1} onApprove={approve} onReject={reject} onBack={() => setSelected(null)} />;
-  if (addlSelected) return <ApprovalDetail user={user} onLogout={onLogout} trip={addlSelected} level={1} onApprove={approveAdditional} onReject={async (note) => { try { await rejectExpense(addlSelected.id, note); await reload(); void reloadDash(); } catch(err) { alert(err instanceof Error ? err.message : "Lỗi."); } setAddlSelected(null); }} onBack={() => setAddlSelected(null)} additionalApproval />;
+  if (addlSelected) return <ApprovalDetail user={user} onLogout={onLogout} trip={addlSelected} level={1} onApprove={approveAdditional} onReject={async (note) => { try { await reapproveExpense(addlSelected.id, note, 'REJECTED'); await reload(); void reloadDash(); } catch(err) { alert(err instanceof Error ? err.message : "Lỗi."); } setAddlSelected(null); }} onBack={() => setAddlSelected(null)} additionalApproval />;
 
   // Stats từ dashboard API
   const teamTotal   = dash?.teamTrips.total ?? trips.filter(t => t.employeeId !== user.id).length;
@@ -2315,7 +2321,7 @@ function ApprovalDetail({ user, onLogout, trip, level, onApprove, onReject, onBa
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <Nav user={user} onLogout={onLogout} />
-      <PageHeader label={trip.tripCode} title={`${trip.from} — ${trip.to}`} subtitle={`${trip.departDate} – ${trip.returnDate} · ${trip.employeeName} · Duyệt cấp ${level}`} action={user.role === 'finance' && PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn /> : undefined} />
+      <PageHeader label={trip.tripCode} title={`${trip.from} — ${trip.to}`} subtitle={`${trip.departDate} – ${trip.returnDate} · ${trip.employeeName} · Duyệt cấp ${level}`} action={user.role === 'finance' && PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn tripId={trip.id} /> : undefined} />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
         <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">Quay lại</button></div>
         {trip.policyViolations && trip.policyViolations.length > 0 && <div className="mb-4"><PolicyBanner violations={trip.policyViolations} /></div>}
@@ -2550,7 +2556,7 @@ function FinExpense({ user, onLogout, trip, onClose, onBack }: {
   const items: ExpenseItem[] = (expense?.items ?? []).map(i => ({
     id: i.id, date: new Date(i.expenseDate).toLocaleDateString("vi-VN"),
     category: mapBackendCategory(i.category), label: i.description,
-    description: i.description, budgeted: 0, actual: i.amount,
+    description: i.description, budgeted: null, actual: i.amount,
   }));
 
   if (expLoading) {
@@ -2565,7 +2571,7 @@ function FinExpense({ user, onLogout, trip, onClose, onBack }: {
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <Nav user={user} onLogout={onLogout} />
-      <PageHeader label={trip.tripCode} title="Chi phí thực tế" subtitle={`${trip.from} — ${trip.to} · ${trip.employeeName}`} action={PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn /> : undefined} />
+      <PageHeader label={trip.tripCode} title="Chi phí thực tế" subtitle={`${trip.from} — ${trip.to} · ${trip.employeeName}`} action={PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn tripId={trip.id} /> : undefined} />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
         <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">Quay lại</button></div>
         {requiresManagerReapproval && alreadyApproved && (
@@ -2582,7 +2588,7 @@ function FinExpense({ user, onLogout, trip, onClose, onBack }: {
           <div className="lg:col-span-2 flex flex-col gap-4">
             <Card className="p-6">
               <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase mb-4">Bảng so sánh chi phí</p>
-              <VarianceTable items={items} />
+              <VarianceTable items={items} totalBudget={totalBudgeted} />
             </Card>
             {/* BR-TR-05: Finance phải đọc được giải trình chênh lệch của nhân viên */}
             <Card className="p-5">

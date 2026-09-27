@@ -144,11 +144,12 @@ export async function rejectExpense(
 export async function reapproveExpense(
   tripId: string,
   comment: string,
+  action: 'APPROVED' | 'REJECTED' = 'APPROVED',
   requestKey: string = crypto.randomUUID(),
 ): Promise<BackendExpense> {
   const res = await apiRequest<{ data: BackendExpense }>(`/trips/${tripId}/expense/reapprove`, {
     method: 'POST',
-    body: JSON.stringify({ action: 'APPROVED', comment }),
+    body: JSON.stringify({ action, comment }),
     headers: { 'Idempotency-Key': requestKey },
   });
   return res.data;
