@@ -365,6 +365,13 @@ export async function startTrip(
     const trip = await tx.trip.findUnique({ where: { id: tripId } });
     if (!trip) throw Errors.TRIP_NOT_FOUND();
     if (trip.employeeId !== userId) throw Errors.FORBIDDEN();
+    const itineraryCount = await tx.itineraryItem.count({ where: { tripId } });
+    if (itineraryCount === 0) {
+      throw Errors.VALIDATION_ERROR({
+        fieldErrors: { itinerary: ['Cần bổ sung ít nhất một mục lịch trình trước khi bắt đầu chuyến đi.'] },
+        formErrors: [],
+      });
+    }
 
     const allowed = VALID_TRANSITIONS[trip.status] ?? [];
     if (trip.status === 'CLOSED') throw Errors.TRIP_IMMUTABLE();
@@ -559,7 +566,7 @@ export async function approveTrip(
 ): Promise<unknown> {
   return runMutation(async (tx, afterCommit) => {
     await assertMutableTrip(tx, tripId);
-    const { updated, newStatus, auditAction, employeeId } = await (async () => {
+    const { updated, newStatus, auditAction, employeeId, itineraryCount } = await (async () => {
       const trip = await tx.trip.findUnique({
         where: { id: tripId },
         include: {
@@ -603,7 +610,8 @@ export async function approveTrip(
         },
       });
 
-      return { updated, newStatus, auditAction, employeeId: trip.employee.id };
+      const itineraryCount = await tx.itineraryItem.count({ where: { tripId } });
+      return { updated, newStatus, auditAction, employeeId: trip.employee.id, itineraryCount };
     })();
 
     await logAudit({
@@ -621,6 +629,18 @@ export async function approveTrip(
       referenceId:   tripId,
       referenceType: 'TRIP',
     }, tx, afterCommit);
+
+    if (itineraryCount === 0) {
+      await createNotification({
+        recipientId: employeeId,
+        type: 'TRIP_APPROVED',
+        message: newStatus === 'APPROVED'
+          ? 'Chuyến đi đã được phê duyệt. Vui lòng bổ sung lịch trình trước khi bắt đầu chuyến đi.'
+          : 'Chuyến đi đã được phê duyệt cấp 1. Vui lòng bổ sung lịch trình trước khi hoàn tất phê duyệt và bắt đầu chuyến đi.',
+        referenceId: tripId,
+        referenceType: 'TRIP',
+      }, tx, afterCommit);
+    }
 
     // Notify tất cả TRAVEL_ADMIN khi trip chuyển sang PENDING_ADMIN_APPROVAL
     if (newStatus === 'PENDING_ADMIN_APPROVAL') {

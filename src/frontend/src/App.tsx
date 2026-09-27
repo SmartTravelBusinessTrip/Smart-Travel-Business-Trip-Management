@@ -1406,7 +1406,7 @@ function EmployeeApp({ user, onLogout }: { user: User; onLogout: () => void }) {
                   )}
                   {trip.status === "APPROVED" && (
                     <>
-                      <button onClick={event => { event.stopPropagation(); void (async () => { try { await startTrip(trip.id); await reload(); } catch (err) { alert(err instanceof Error ? err.message : "Không thể bắt đầu chuyến đi."); } })(); }} className="text-sm font-medium text-cyan-700 border border-cyan-200 hover:bg-cyan-50 px-3 py-1.5 rounded-lg transition-colors">Bắt đầu chuyến đi</button>
+                      <button onClick={event => { event.stopPropagation(); void (async () => { try { const itinerary = await getItinerary(trip.id); if (itinerary.items.length === 0) { alert("Vui lòng bổ sung ít nhất một mục lịch trình trước khi bắt đầu chuyến đi."); return; } await startTrip(trip.id); await reload(); } catch (err) { alert(err instanceof Error ? err.message : "Không thể bắt đầu chuyến đi."); } })(); }} className="text-sm font-medium text-cyan-700 border border-cyan-200 hover:bg-cyan-50 px-3 py-1.5 rounded-lg transition-colors">Bắt đầu chuyến đi</button>
                     </>
                   )}
                   {trip.status === "TRIP_IN_PROGRESS" && (
