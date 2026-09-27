@@ -2223,7 +2223,6 @@ function EmpExpense({ user, onLogout, trip, onBack, onSave }: {
                 </button>
               </>
             )}
-            <button onClick={onBack} className="w-full py-2.5 text-sm font-semibold text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">Quay lại</button>
           </div>
         </div>
       </main>

@@ -15,7 +15,7 @@
  *   - httpOnly: true — không thể đọc từ JS
  *   - sameSite: 'strict' — chống CSRF
  *   - secure: true trong production
- *   - maxAge: 7 ngày (ms)
+ *   - Session cookie: không có maxAge, nên không được giữ sau khi đóng browser
  */
 
 import { Request, Response, NextFunction } from 'express';
@@ -26,14 +26,12 @@ import { Errors } from '../middlewares/error-handler';
 // ─── Cookie Config ────────────────────────────────────────────────────────────
 
 const REFRESH_COOKIE_NAME = 'refreshToken';
-const REFRESH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 ngày
 
 function setRefreshCookie(res: Response, token: string): void {
   res.cookie(REFRESH_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: 'strict',
     secure: process.env['NODE_ENV'] === 'production',
-    maxAge: REFRESH_COOKIE_MAX_AGE_MS,
     path: '/',
   });
 }

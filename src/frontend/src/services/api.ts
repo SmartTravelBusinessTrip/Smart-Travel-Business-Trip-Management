@@ -111,20 +111,19 @@ export const authApi = {
       skipRefresh: true,
     });
     setAccessToken(result.accessToken);
-    // Hướng B: đánh dấu session active trong sessionStorage
-    // sessionStorage tồn tại qua F5 nhưng mất khi đóng tab/browser hoặc restart localhost
-    localStorage.setItem(SESSION_KEY, '1');
+    // Chỉ giữ phiên trong tab hiện tại; không tự đăng nhập lại sau khi đóng browser.
+    sessionStorage.setItem(SESSION_KEY, '1');
     return result.user;
   },
 
   async restoreSession(): Promise<BackendUser> {
     // Hướng B: chỉ restore nếu tab này đã từng login trong phiên hiện tại
     // Flag vắng mặt = đóng tab, đóng browser, hoặc restart localhost → buộc login lại
-    const hasSession = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
+    const hasSession = sessionStorage.getItem(SESSION_KEY);
     if (!hasSession) {
       throw new Error('No active session');
     }
-    localStorage.setItem(SESSION_KEY, '1');
+    sessionStorage.setItem(SESSION_KEY, '1');
     await refreshAccessToken();
     return request<BackendUser>('/auth/me');
   },
@@ -135,7 +134,6 @@ export const authApi = {
     } finally {
       setAccessToken(null);
       // Xóa flag để tab này không tự restore session sau khi logout
-      localStorage.removeItem(SESSION_KEY);
       sessionStorage.removeItem(SESSION_KEY);
     }
   },
