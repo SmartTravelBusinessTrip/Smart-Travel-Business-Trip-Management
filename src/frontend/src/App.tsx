@@ -1957,7 +1957,7 @@ function EmpSuccess({ user, onLogout, onBack }: { user: User; onLogout: () => vo
             ))}
           </div>
         </div>
-        <button onClick={onBack} className="px-8 py-3 text-sm font-semibold text-white bg-[#1b2f35] hover:bg-[#243d45] rounded-xl shadow-sm transition-colors">Về Dashboard</button>
+        <button onClick={onBack} className="px-8 py-3 text-sm font-semibold text-white bg-[#1b2f35] hover:bg-[#243d45] rounded-xl shadow-sm transition-colors">← Về Dashboard</button>
       </main>
     </div>
   );
@@ -1987,7 +1987,15 @@ function EmpItinerary({ user, onLogout, trip, onBack }: { user: User; onLogout: 
       <Nav user={user} onLogout={onLogout} />
       <PageHeader label={trip.tripCode} title={`${trip.from} — ${trip.to}`} subtitle={`${trip.departDate} – ${trip.returnDate} · Lịch trình`} action={PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn tripId={trip.id} /> : undefined} />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
-        <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">Về Dashboard</button></div>
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => { if (window.history.length > 1) window.history.back(); else onBack(); }}
+            className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:border-gray-300 hover:text-[#1b2f35]"
+          >
+            ← Quay lại
+          </button>
+        </div>
         <Card className="w-full max-w-4xl mx-auto p-6 sm:p-8">
           <p className="ui-section-title">Lịch trình chuyến đi</p>
           {readOnly && <p className="text-xs text-gray-400 mb-4 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100">Hồ sơ đã đóng — dữ liệu lịch trình ở chế độ chỉ đọc.</p>}
@@ -2047,7 +2055,7 @@ function EmpStatus({ user, onLogout, trip, onBack, onOpenExpense }: { user: User
     return <div className="min-h-screen bg-gray-50 font-sans"><Nav user={user} onLogout={onLogout} /><main className="max-w-6xl mx-auto px-4 sm:px-6 py-12 text-center text-sm text-gray-400">Đang tải chi tiết Trip...</main></div>;
   }
   if (detailError || !detailTrip) {
-    return <div className="min-h-screen bg-gray-50 font-sans"><Nav user={user} onLogout={onLogout} /><main className="max-w-6xl mx-auto px-4 sm:px-6 py-12 text-center"><p className="text-sm text-red-500 mb-4">{detailError || "Không tìm thấy Trip."}</p><button onClick={onBack} className="text-xs text-gray-500 hover:text-gray-700">Về Dashboard</button></main></div>;
+    return <div className="min-h-screen bg-gray-50 font-sans"><Nav user={user} onLogout={onLogout} /><main className="max-w-6xl mx-auto px-4 sm:px-6 py-12 text-center"><p className="text-sm text-red-500 mb-4">{detailError || "Không tìm thấy Trip."}</p><button onClick={onBack} className="text-xs text-gray-500 hover:text-gray-700">← Về Dashboard</button></main></div>;
   }
   trip = detailTrip;
   const managerDone = ["PENDING_ADMIN_APPROVAL", "APPROVED", "TRIP_IN_PROGRESS", "EXPENSE_DRAFT", "EXPENSE_SUBMITTED", "PENDING_MANAGER_ADDITIONAL_APPROVAL", "EXPENSE_APPROVED", "CLOSED"].includes(trip.status);
@@ -2233,7 +2241,7 @@ function EmpExpense({ user, onLogout, trip, onBack, onSave }: {
       <Nav user={user} onLogout={onLogout} />
       <PageHeader label={trip.tripCode} title="Khai báo chi phí thực tế" subtitle={`${trip.from} — ${trip.to} · ${trip.departDate} – ${trip.returnDate}`} action={PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn tripId={trip.id} /> : undefined} />
       <main className="ui-page-main">
-        <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">Về Dashboard</button></div>
+        <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">← Về Dashboard</button></div>
         {readOnly && (
           <div className="max-w-3xl mb-4 px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-xs text-gray-500">
             {trip.status === "CLOSED" ? "Hồ sơ đã đóng — dữ liệu ở chế độ chỉ đọc." : trip.status === "PENDING_MANAGER_ADDITIONAL_APPROVAL" ? "Chờ Manager duyệt bổ sung — chi phí vượt quá 10% dự toán, hồ sơ đã được chuyển cho Manager." : trip.status === "EXPENSE_APPROVED" ? "Finance đã phê duyệt chi phí — đang chờ đóng hồ sơ." : "Báo cáo đã nộp — đang chờ Finance xem xét."}
@@ -2390,7 +2398,7 @@ function ApprovalDetail({ user, onLogout, trip, level, onApprove, onReject, onBa
       <Nav user={user} onLogout={onLogout} />
       <PageHeader label={trip.tripCode} title={`${trip.from} — ${trip.to}`} subtitle={`${trip.departDate} – ${trip.returnDate} · ${trip.employeeName} · Duyệt cấp ${level}`} action={user.role === 'finance' && PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn tripId={trip.id} /> : undefined} />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
-        <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">Quay lại</button></div>
+        <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">← Quay lại</button></div>
         {trip.policyViolations && trip.policyViolations.length > 0 && <div className="mb-4"><PolicyBanner violations={trip.policyViolations} /></div>}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 flex flex-col gap-4">
@@ -2640,7 +2648,7 @@ function FinExpense({ user, onLogout, trip, onClose, onBack }: {
       <Nav user={user} onLogout={onLogout} />
       <PageHeader label={trip.tripCode} title="Chi phí thực tế" subtitle={`${trip.from} — ${trip.to} · ${trip.employeeName}`} action={PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn tripId={trip.id} /> : undefined} />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
-        <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">Quay lại</button></div>
+        <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">← Quay lại</button></div>
         {requiresManagerReapproval && alreadyApproved && (
           <div className="max-w-3xl mb-4 flex items-start gap-2.5 px-4 py-3 rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-700 text-sm">
             <div>Chi phí vượt <strong>{overPctText}</strong> đã được Manager phê duyệt bổ sung — Finance có thể duyệt và đóng hồ sơ.</div>
@@ -2733,7 +2741,7 @@ function FinClose({ user, onLogout, trip, onConfirm, onBack }: {
       <Nav user={user} onLogout={onLogout} />
       <PageHeader label={trip.tripCode} title="Đóng hồ sơ chuyến đi" subtitle="Xác nhận để hoàn tất và lưu trữ hồ sơ quyết toán." />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
-        <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">Quay lại</button></div>
+        <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">← Quay lại</button></div>
         <Card className="p-6 sm:p-8 max-w-xl">
           <div className="flex flex-col items-center text-center gap-4 mb-6">
             <div className="w-12 h-12 rounded-full bg-amber-100 border-2 border-amber-300 flex items-center justify-center">
@@ -2930,7 +2938,7 @@ function RegisterScreen({ onBack, onSuccess }: { onBack: () => void; onSuccess: 
                   {errors.confirm && <p className="text-xs text-red-500 mt-1">{errors.confirm}</p>}
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                  <button type="button" onClick={() => setStep(1)} className="text-xs text-gray-400 hover:text-gray-600">Quay lại</button>
+                  <button type="button" onClick={() => setStep(1)} className="text-xs text-gray-400 hover:text-gray-600">← Quay lại</button>
                   <button type="submit" className="px-5 py-2.5 text-sm font-semibold text-white bg-[#1b2f35] hover:bg-[#243d45] rounded-lg shadow-sm transition-colors">Tạo tài khoản</button>
                 </div>
               </form>
