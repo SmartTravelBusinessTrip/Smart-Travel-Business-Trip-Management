@@ -547,7 +547,7 @@ function NotifBell({ userId }: { userId: string }) {
 function Nav({ user, onLogout }: { user: User; onLogout: () => void }) {
   return (
     <header className="bg-[#1b2f35] text-white shrink-0">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+      <div className="ui-container h-14 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 shrink-0">
           <span className={`flex items-center justify-center w-7 h-7 rounded-md ${ROLE_COLORS[user.role].logo} text-white font-bold text-sm select-none`}>S</span>
           <span className="font-semibold text-sm tracking-wide">Smart Travel</span>
@@ -576,11 +576,11 @@ function Nav({ user, onLogout }: { user: User; onLogout: () => void }) {
 function PageHeader({ label, title, subtitle, action }: { label: string; title: string; subtitle?: string; action?: React.ReactNode }) {
   return (
     <div className="bg-white border-b border-gray-100">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex items-start justify-between gap-4">
+      <div className="ui-container py-6 flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold tracking-widest text-amber-500 uppercase mb-1">{label}</p>
-          <h1 className="text-3xl font-bold text-[#1b2f35] leading-tight">{title}</h1>
-          {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+          <h1 className="ui-page-title">{title}</h1>
+          {subtitle && <p className="ui-page-subtitle">{subtitle}</p>}
         </div>
         {action && <div className="shrink-0 mt-1">{action}</div>}
       </div>
@@ -589,7 +589,7 @@ function PageHeader({ label, title, subtitle, action }: { label: string; title: 
 }
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`bg-white rounded-xl border border-gray-200 shadow-sm ${className}`}>{children}</div>;
+  return <div className={`ui-card ${className}`}>{children}</div>;
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
@@ -1045,7 +1045,7 @@ function ItineraryListServer({ items, readOnly, autoOpen = false, onAdd, onUpdat
     <div className="flex flex-col gap-4">
       {Object.keys(byDay).sort((a, b) => Number(a) - Number(b)).map(dayNum => (
         <div key={dayNum}>
-          <p className="text-xs font-bold text-[#1b2f35] mb-2 pb-1.5 border-b border-gray-100">Ngày {dayNum}</p>
+          <p className="mt-1 mb-3 pb-2 text-sm font-semibold leading-5 text-[#1b2f35] border-b border-gray-100">Ngày {dayNum}</p>
           <div className="flex flex-col gap-2">
             {byDay[Number(dayNum)].map(item => (
               <div key={item.id} className="group flex gap-3 rounded-lg px-2 py-2 hover:bg-gray-50">
@@ -1665,7 +1665,7 @@ function EmpCreate({ user, onLogout, initialDraftTripId, onSuccess, onSaveDraft,
           <option key={province} value={province} />
         ))}
       </datalist>
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
+      <main className="ui-page-main">
         <div className="border border-gray-200 rounded-xl p-6 sm:p-8 max-w-2xl mx-auto bg-white shadow-[0_6px_18px_rgba(15,23,42,0.03)]">
           {loadingDraft && <p className="mb-5 rounded-lg bg-amber-50 px-3.5 py-3 text-sm text-amber-700">Đang tải bản nháp...</p>}
           {step === 0 && (
@@ -1988,8 +1988,8 @@ function EmpItinerary({ user, onLogout, trip, onBack }: { user: User; onLogout: 
       <PageHeader label={trip.tripCode} title={`${trip.from} — ${trip.to}`} subtitle={`${trip.departDate} – ${trip.returnDate} · Lịch trình`} action={PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn tripId={trip.id} /> : undefined} />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
         <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">Về Dashboard</button></div>
-        <Card className="p-6 sm:p-8 max-w-2xl">
-          <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase mb-5">Lịch trình chuyến đi</p>
+        <Card className="w-full max-w-4xl mx-auto p-6 sm:p-8">
+          <p className="ui-section-title">Lịch trình chuyến đi</p>
           {readOnly && <p className="text-xs text-gray-400 mb-4 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100">Hồ sơ đã đóng — dữ liệu lịch trình ở chế độ chỉ đọc.</p>}
           {itinLoading && <p className="text-sm text-gray-400 py-8 text-center">Đang tải lịch trình...</p>}
           {itinError && <p className="text-sm text-red-500 py-4 text-center">{itinError}</p>}
@@ -2066,7 +2066,7 @@ function EmpStatus({ user, onLogout, trip, onBack, onOpenExpense }: { user: User
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <Nav user={user} onLogout={onLogout} />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      <main className="ui-page-main">
         <button onClick={onBack} className="mb-3 text-xs text-gray-400 hover:text-gray-600">← Về Dashboard</button>
         <div className="mb-5">
           <span className="inline-flex rounded bg-amber-100 px-2 py-1 text-[10px] font-bold text-amber-700">{trip.tripCode}</span>
@@ -2232,7 +2232,7 @@ function EmpExpense({ user, onLogout, trip, onBack, onSave }: {
     <div className="min-h-screen bg-gray-50 font-sans">
       <Nav user={user} onLogout={onLogout} />
       <PageHeader label={trip.tripCode} title="Khai báo chi phí thực tế" subtitle={`${trip.from} — ${trip.to} · ${trip.departDate} – ${trip.returnDate}`} action={PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn tripId={trip.id} /> : undefined} />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
+      <main className="ui-page-main">
         <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">Về Dashboard</button></div>
         {readOnly && (
           <div className="max-w-3xl mb-4 px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-xs text-gray-500">
