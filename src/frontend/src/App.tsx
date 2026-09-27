@@ -984,18 +984,19 @@ function dmyDateToIso(value: string): string {
   return match ? `${match[3]}-${match[2]}-${match[1]}` : "";
 }
 
-function ItineraryListServer({ items, readOnly, onAdd, onUpdate, onDelete }: {
+function ItineraryListServer({ items, readOnly, autoOpen = false, onAdd, onUpdate, onDelete }: {
   items: BackendItineraryItem[];
   tripId?: string;
   departDate?: string;
   readOnly?: boolean;
+  autoOpen?: boolean;
   onAdd: (input: ItineraryItemInput) => Promise<void>;
   onUpdate: (itemId: string, input: Partial<ItineraryItemInput>) => Promise<void>;
   onDelete: (itemId: string) => Promise<void>;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<ItineraryItemInput>>({});
-  const [addOpen, setAddOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(autoOpen);
   const [newItem, setNewItem] = useState<ItineraryItemInput>({
     itemDate: "", timeSlot: "MORNING", location: "", activity: "", category: "MEETING",
   });
@@ -1299,7 +1300,7 @@ function EmployeeApp({ user, onLogout }: { user: User; onLogout: () => void }) {
   if (screen === "create")    return <EmpCreate user={user} onLogout={onLogout} initialDraftTripId={draftTripIdFromUrl} onSuccess={() => { void reload(); setSearchParams({}); setScreen("success"); }} onSaveDraft={() => { void reload(); setSearchParams({}); setScreen("dashboard"); }} onCancel={() => { setSearchParams({}); setScreen("dashboard"); }} />;
   if (screen === "success")   return <EmpSuccess user={user} onLogout={onLogout} onBack={() => setScreen("dashboard")} />;
   if (screen === "itinerary" && selected) return <EmpItinerary user={user} onLogout={onLogout} trip={selected} onBack={() => setScreen("dashboard")} />;
-  if (screen === "status"    && (selected || routeTrip)) return <EmpStatus    user={user} onLogout={onLogout} trip={selected ?? routeTrip!} onBack={() => { setSearchParams({}); setScreen("dashboard"); }} onOpenItinerary={() => { setSelected(selected ?? routeTrip!); setSearchParams({}); setScreen("itinerary"); }} onOpenExpense={() => { setSelected(selected ?? routeTrip!); setSearchParams({}); setScreen("expense"); }} />;
+  if (screen === "status"    && (selected || routeTrip)) return <EmpStatus    user={user} onLogout={onLogout} trip={selected ?? routeTrip!} onBack={() => { setSearchParams({}); setScreen("dashboard"); }} onOpenExpense={() => { setSelected(selected ?? routeTrip!); setSearchParams({}); setScreen("expense"); }} />;
   if (screen === "expense"   && selected) return <EmpExpense   user={user} onLogout={onLogout} trip={selected} onBack={() => setScreen("dashboard")} onSave={async () => { await reload(); setScreen("dashboard"); }} />;
 
   const filtered = myTrips.filter(t => filter === "all" || t.status === filter);
@@ -2009,10 +2010,25 @@ function EmpItinerary({ user, onLogout, trip, onBack }: { user: User; onLogout: 
   );
 }
 
-function EmpStatus({ user, onLogout, trip, onBack, onOpenItinerary, onOpenExpense }: { user: User; onLogout: () => void; trip: Trip; onBack: () => void; onOpenItinerary?: () => void; onOpenExpense?: () => void }) {
+function EmpStatus({ user, onLogout, trip, onBack, onOpenExpense }: { user: User; onLogout: () => void; trip: Trip; onBack: () => void; onOpenExpense?: () => void }) {
   const [detailTrip, setDetailTrip] = useState<Trip | null>(null);
   const [detailLoading, setDetailLoading] = useState(true);
   const [detailError, setDetailError] = useState("");
+  const [itineraryItems, setItineraryItems] = useState<BackendItineraryItem[]>([]);
+  const [itineraryLoading, setItineraryLoading] = useState(true);
+  const [showInlineItineraryForm, setShowInlineItineraryForm] = useState(false);
+
+  const reloadItinerary = async () => {
+    setItineraryLoading(true);
+    try {
+      const result = await getItinerary(trip.id);
+      setItineraryItems(result.items);
+    } catch {
+      setItineraryItems([]);
+    } finally {
+      setItineraryLoading(false);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -2024,6 +2040,8 @@ function EmpStatus({ user, onLogout, trip, onBack, onOpenItinerary, onOpenExpens
       .finally(() => { if (mounted) setDetailLoading(false); });
     return () => { mounted = false; };
   }, [trip.id]);
+
+  useEffect(() => { void reloadItinerary(); }, [trip.id]);
 
   if (detailLoading) {
     return <div className="min-h-screen bg-gray-50 font-sans"><Nav user={user} onLogout={onLogout} /><main className="max-w-6xl mx-auto px-4 sm:px-6 py-12 text-center text-sm text-gray-400">Đang tải chi tiết Trip...</main></div>;
@@ -2080,7 +2098,28 @@ function EmpStatus({ user, onLogout, trip, onBack, onOpenItinerary, onOpenExpens
             <div className="mt-5 grid grid-cols-2 gap-4 rounded-lg border border-gray-100 bg-gray-50 p-3">
               <div><p className="text-[10px] text-gray-400">Tổng dự toán ngân sách</p><p className="mt-1 text-sm font-bold text-emerald-600">{trip.budget.toLocaleString("vi-VN")} đ</p></div>
             </div>
-            <div className="mt-5 border-t border-gray-100 pt-4"><p className="mb-3 text-xs font-semibold tracking-wider text-gray-400 uppercase">Lịch trình</p><ApprovalItineraryPreview tripId={trip.id} onAdd={!managerDone ? onOpenItinerary : undefined} /></div>
+            <div className="mt-5 border-t border-gray-100 pt-4">
+              <p className="mb-3 text-xs font-semibold tracking-wider text-gray-400 uppercase">Lịch trình</p>
+              {itineraryLoading && <p className="text-xs text-gray-400">Đang tải lịch trình...</p>}
+              {!itineraryLoading && itineraryItems.length === 0 && !showInlineItineraryForm && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">
+                  <p className="text-xs text-amber-700">Chuyến đi chưa có lịch trình. Vui lòng bổ sung trước khi bắt đầu chuyến đi.</p>
+                  {trip.status !== "CLOSED" && <button onClick={() => setShowInlineItineraryForm(true)} className="mt-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Thêm lịch trình</button>}
+                </div>
+              )}
+              {!itineraryLoading && (itineraryItems.length > 0 || showInlineItineraryForm) && (
+                <ItineraryListServer
+                  items={itineraryItems}
+                  tripId={trip.id}
+                  departDate={trip.departDate}
+                  readOnly={trip.status === "CLOSED"}
+                  autoOpen={showInlineItineraryForm && itineraryItems.length === 0}
+                  onAdd={async input => { await addItineraryItem(trip.id, input); setShowInlineItineraryForm(false); await reloadItinerary(); }}
+                  onUpdate={async (itemId, input) => { await updateItineraryItem(trip.id, itemId, input); await reloadItinerary(); }}
+                  onDelete={async itemId => { await deleteItineraryItem(trip.id, itemId); await reloadItinerary(); }}
+                />
+              )}
+            </div>
           </Card>
           <Card className="p-5 sm:p-6">
             <h2 className="border-b border-gray-100 pb-3 text-sm font-semibold text-[#1b2f35]">Trạng thái phê duyệt</h2>
