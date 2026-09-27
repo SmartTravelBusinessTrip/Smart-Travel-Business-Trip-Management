@@ -974,6 +974,16 @@ const ITIN_CATEGORIES: { key: ItineraryCategory; label: string }[] = [
   { key: "OTHER", label: "Khác" },
 ];
 
+function isoDateToDmy(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : "";
+}
+
+function dmyDateToIso(value: string): string {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : "";
+}
+
 function ItineraryListServer({ items, readOnly, onAdd, onUpdate, onDelete }: {
   items: BackendItineraryItem[];
   tripId?: string;
@@ -987,9 +997,10 @@ function ItineraryListServer({ items, readOnly, onAdd, onUpdate, onDelete }: {
   const [draft, setDraft] = useState<Partial<ItineraryItemInput>>({});
   const [addOpen, setAddOpen] = useState(false);
   const [newItem, setNewItem] = useState<ItineraryItemInput>({
-    itemDate: "", timeSlot: "MORNING", location: "", activity: "", category: "MEETING", estimatedCost: 0,
+    itemDate: "", timeSlot: "MORNING", location: "", activity: "", category: "MEETING",
   });
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState("");
 
   // Group by dayNumber
   const byDay = items.reduce<Record<number, BackendItineraryItem[]>>((acc, it) => {
@@ -1005,9 +1016,19 @@ function ItineraryListServer({ items, readOnly, onAdd, onUpdate, onDelete }: {
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!newItem.itemDate || !newItem.location || !newItem.activity) return;
+    setFormError("");
+    if (!newItem.itemDate || !newItem.location.trim() || !newItem.activity.trim()) {
+      setFormError("Vui lòng nhập ngày, hoạt động và địa điểm.");
+      return;
+    }
     setSaving(true);
-    try { await onAdd(newItem); setAddOpen(false); setNewItem({ itemDate: "", timeSlot: "MORNING", location: "", activity: "", category: "MEETING", estimatedCost: 0 }); }
+    try {
+      await onAdd(newItem);
+      setAddOpen(false);
+      setNewItem({ itemDate: "", timeSlot: "MORNING", location: "", activity: "", category: "MEETING" });
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Không thể thêm lịch trình.");
+    }
     finally { setSaving(false); }
   }
 
@@ -1067,7 +1088,7 @@ function ItineraryListServer({ items, readOnly, onAdd, onUpdate, onDelete }: {
           <form onSubmit={handleAdd} className="border border-emerald-200 rounded-xl p-4 bg-emerald-50/40 flex flex-col gap-3">
             <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Thêm mục lịch trình</p>
             <div className="grid grid-cols-2 gap-3">
-              <div><FieldLabel>Ngày *</FieldLabel><DatePicker value={newItem.itemDate.replace(/-(\d+)-(\d+)$/, '/$2/$1').replace(/^(\d+)-/, '$2-').split('-').reverse().join('/') || ""} onChange={v => { const [dd,mm,yyyy] = v.split('/'); setNewItem(f => ({ ...f, itemDate: `${yyyy}-${mm}-${dd}` })); }} /></div>
+              <div><FieldLabel>Ngày *</FieldLabel><DatePicker value={isoDateToDmy(newItem.itemDate)} onChange={v => setNewItem(f => ({ ...f, itemDate: dmyDateToIso(v) }))} /></div>
               <div><FieldLabel>Thời gian</FieldLabel>
                 <select value={newItem.timeSlot} onChange={e => setNewItem(f => ({ ...f, timeSlot: e.target.value as ItineraryTimeSlot }))} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1b2f35]">
                   {(['MORNING','AFTERNOON','EVENING','ALL_DAY'] as ItineraryTimeSlot[]).map(s => <option key={s} value={s}>{TIME_SLOT_LABEL[s]}</option>)}
@@ -1082,8 +1103,9 @@ function ItineraryListServer({ items, readOnly, onAdd, onUpdate, onDelete }: {
                   {ITIN_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
                 </select>
               </div>
-              <div><FieldLabel>Chi phí ước tính (đ)</FieldLabel><input type="number" min={0} value={newItem.estimatedCost ?? 0} onChange={e => setNewItem(f => ({ ...f, estimatedCost: Number(e.target.value) }))} className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1b2f35]" /></div>
+              <div><FieldLabel>Chi phí ước tính (đ)</FieldLabel><input type="number" min={0} placeholder="Ví dụ: 1200000" value={newItem.estimatedCost ?? ""} onChange={e => setNewItem(f => ({ ...f, estimatedCost: e.target.value === "" ? undefined : Number(e.target.value) }))} className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1b2f35]" /></div>
             </div>
+            {formError && <p className="text-xs text-red-600" role="alert">{formError}</p>}
             <div className="flex gap-2">
               <button type="submit" disabled={saving} className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-50">{saving ? "Đang thêm..." : "Thêm"}</button>
               <button type="button" onClick={() => setAddOpen(false)} className="px-4 py-2 text-xs text-gray-500 border border-gray-200 rounded-lg">Huỷ</button>
@@ -1509,7 +1531,8 @@ function EmpCreate({ user, onLogout, initialDraftTripId, onSuccess, onSaveDraft,
     if (!form.purpose.trim()) e.purpose = "Vui lòng nhập mục đích chuyến đi.";
     else if (form.purpose.trim().length < 10) e.purpose = "Mục đích phải có ít nhất 10 ký tự.";
 
-    const b = Number(form.budget.replace(/[^0-9]/g, ""));
+    // Không loại bỏ dấu âm: Number("-1600000") phải vẫn là số âm để validation chặn.
+    const b = Number(form.budget.trim());
     if (!form.budget.trim()) e.budget = "Vui lòng nhập ngân sách dự kiến.";
     else if (isNaN(b) || b <= 0) e.budget = "Ngân sách phải là số dương.";
 
@@ -1531,6 +1554,11 @@ function EmpCreate({ user, onLogout, initialDraftTripId, onSuccess, onSaveDraft,
       setTimeout(() => setSaveMsg(null), 3000);
       return;
     }
+    if (form.budget.trim() && (!Number.isFinite(Number(form.budget.trim())) || Number(form.budget.trim()) <= 0)) {
+      setSaveMsg({ ok: false, text: "Ngân sách phải là số dương." });
+      setTimeout(() => setSaveMsg(null), 3000);
+      return;
+    }
 
     setSaving(true);
     setSaveMsg(null);
@@ -1544,7 +1572,7 @@ function EmpCreate({ user, onLogout, initialDraftTripId, onSuccess, onSaveDraft,
         departureDate:    form.departDate ? `${yyyy1}-${mm1}-${dd1}` : "2099-01-01",
         returnDate:       form.returnDate  ? `${yyyy2}-${mm2}-${dd2}` : "2099-01-02",
         purpose:          form.purpose.trim() || "Đang soạn thảo — chưa hoàn chỉnh",
-        estimatedBudget:  Number(form.budget.replace(/[^0-9]/g, "")) || 1,
+        estimatedBudget:  Number(form.budget.trim()) || 1,
         ...(form.urgent || isLateSubmission
           ? { urgencyReason: form.urgentReason.trim() || undefined }
           : {}),
