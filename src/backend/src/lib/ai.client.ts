@@ -178,7 +178,7 @@ function safeProviderBody(rawBody: string, apiKey: string): string | undefined {
   if (!trimmed) return undefined;
 
   return trimmed
-    .replaceAll(apiKey, '[REDACTED]')
+    .split(apiKey).join('[REDACTED]')
     .replace(/Bearer\s+\S+/gi, 'Bearer [REDACTED]')
     .slice(0, 1000);
 }
