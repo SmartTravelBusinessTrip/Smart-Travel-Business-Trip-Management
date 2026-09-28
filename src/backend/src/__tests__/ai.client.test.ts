@@ -63,7 +63,7 @@ const validDraft = {
 describe('Gemini itinerary client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env['GEMINI_API_KEY'] = 'test-gemini-key';
+    process.env['GROQ_API_KEY'] = 'test-groq-key';
     geminiMocks.generateContent.mockResolvedValue(response(validDraft));
     fetchMock.mockImplementation(async (_url: string, init: RequestInit) => {
       const request = JSON.parse(String(init.body)) as { messages: Array<{ content: string }> };
