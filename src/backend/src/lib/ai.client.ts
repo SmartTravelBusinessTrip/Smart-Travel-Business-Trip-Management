@@ -295,17 +295,6 @@ function parseDateOnly(value: string): Date | null {
   return date;
 }
 
-function stripJsonFences(text: string): string {
-  const trimmed = text.trim();
-
-  if (!trimmed.startsWith('```')) return trimmed;
-
-  return trimmed
-    .replace(/^```[a-zA-Z]*\s*/, '')
-    .replace(/```\s*$/, '')
-    .trim();
-}
-
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
@@ -322,6 +311,39 @@ function malformed(detail: string): DraftValidation {
   };
 }
 
+function logOutputDiagnostic(rawText: string, requestId?: string): void {
+  const trimmed = rawText.trim();
+  let parsed: unknown;
+  let responseType = 'invalid_json';
+  let rootKeys: string[] | undefined;
+
+  try {
+    parsed = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) responseType = 'array';
+    else if (parsed === null) responseType = 'null';
+    else if (typeof parsed === 'object') {
+      responseType = 'object';
+      rootKeys = Object.keys(parsed as Record<string, unknown>).slice(0, 20);
+    } else responseType = typeof parsed;
+  } catch {
+    // Keep invalid_json; diagnostics must never affect request flow.
+  }
+
+  const rawResponsePrefix = trimmed
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/Bearer\s+\S+/gi, 'Bearer [REDACTED]')
+    .replace(/("(?:api[_-]?key|token|authorization|secret)"\s*:\s*)"[^"]*"/gi, '$1"[REDACTED]"')
+    .slice(0, 240);
+
+  logEvent('WARN', 'AI_OUTPUT_DIAGNOSTIC', {
+    requestId: requestId ?? 'unknown',
+    responseType,
+    rootKeys,
+    rawResponseLength: rawText.length,
+    rawResponsePrefix,
+  });
+}
+
 /**
  * Không tin raw model output dù đang dùng strict JSON Schema.
  * Server validate lại business constraints và tự tính totalEstimatedCost.
@@ -333,7 +355,7 @@ function parseAndValidateDraft(
   let parsed: unknown;
 
   try {
-    parsed = JSON.parse(stripJsonFences(rawText));
+    parsed = JSON.parse(rawText);
   } catch (error) {
     return malformed(
       `JSON parse failed: ${error instanceof Error ? error.message : 'Unknown parse error'}`,
@@ -611,7 +633,7 @@ async function callGroq(prompt: string, deadlineAt: number): Promise<string> {
             messages: [
               {
                 role: 'system',
-                content: 'You generate business-trip itinerary data. Follow the supplied JSON Schema and user constraints exactly.',
+                content: 'You generate business-trip itinerary data. Return exactly one raw JSON object in the form {"items":[...]}. Do not return Markdown, code fences, explanations, arrays, or alternate root keys such as itinerary or data. Follow the user constraints exactly.',
               },
               {
                 role: 'user',
@@ -831,6 +853,8 @@ export async function generateItinerary(
 
     lastReason = validation.reason ?? 'MALFORMED';
     lastDetail = validation.detail;
+
+    logOutputDiagnostic(text, input.requestId);
 
     logEvent('WARN', 'AI_OUTPUT_REJECTED', {
       attempt,

@@ -120,6 +120,29 @@ describe('Gemini itinerary client', () => {
     expect(prompt).toContain('Không có dữ liệu hạn mức');
   });
 
+  it('accepts a JSON object with the required items root', async () => {
+    const result = await generateItinerary(input);
+
+    expect(result.guardrailPass).toBe(true);
+    expect(result.items).toHaveLength(2);
+  });
+
+  it('rejects root arrays, missing items, malformed JSON, and markdown fences', async () => {
+    const invalidResponses = [
+      JSON.stringify(validDraft.items),
+      JSON.stringify({ itinerary: validDraft.items }),
+      '{"items":',
+      `\`\`\`json\n${JSON.stringify(validDraft)}\n\`\`\``,
+    ];
+
+    for (const text of invalidResponses) {
+      geminiMocks.generateContent.mockResolvedValue({ text });
+      await expect(generateItinerary(input)).rejects.toMatchObject({
+        errorCode: 'INTERNAL_SERVER_ERROR',
+      });
+    }
+  });
+
   it('grounds a three-day Da Nang to Ha Noi itinerary in chronological daily phases', async () => {
     geminiMocks.generateContent.mockResolvedValueOnce(response({
       items: [10, 11, 12].flatMap((day, index) => [
