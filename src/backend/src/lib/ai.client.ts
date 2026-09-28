@@ -42,6 +42,7 @@ export interface GenerateItineraryInput {
   preferences?: string; // nội dung KHÔNG TIN CẬY — sanitize trước khi đưa vào prompt
   hotelLimitPerNight?: number;
   perDiemPerDay?: number;
+  requestId?: string;
 }
 
 type DraftFailureReason = 'MALFORMED' | 'BUDGET_EXCEEDED';
@@ -170,6 +171,16 @@ function logEvent(
   if (level === 'ERROR') console.error(line);
   else if (level === 'WARN') console.warn(line);
   else console.log(line);
+}
+
+function safeProviderBody(rawBody: string, apiKey: string): string | undefined {
+  const trimmed = rawBody.trim();
+  if (!trimmed) return undefined;
+
+  return trimmed
+    .replaceAll(apiKey, '[REDACTED]')
+    .replace(/Bearer\s+\S+/gi, 'Bearer [REDACTED]')
+    .slice(0, 1000);
 }
 
 // ─── Prompt helpers ───────────────────────────────────────────────────────────
@@ -617,9 +628,16 @@ async function callGroq(prompt: string, deadlineAt: number): Promise<string> {
       );
 
       if (!response.ok) {
-        const errorBody = await response.json().catch(() => null) as {
-          error?: { message?: unknown };
-        } | null;
+        const rawErrorBody = await response.text().catch(() => '');
+        const errorBody = (() => {
+          try {
+            return JSON.parse(rawErrorBody) as {
+              error?: { message?: unknown };
+            };
+          } catch {
+            return null;
+          }
+        })();
 
         const providerMessage = typeof errorBody?.error?.message === 'string'
           ? errorBody.error.message.slice(0, 500)
@@ -629,6 +647,7 @@ async function callGroq(prompt: string, deadlineAt: number): Promise<string> {
           status: response.status,
           headers: response.headers,
           providerMessage,
+          providerBody: safeProviderBody(rawErrorBody, apiKey),
         });
       }
 
@@ -760,13 +779,25 @@ export async function generateItinerary(
           (error as { providerMessage?: unknown }).providerMessage ?? '',
         ).slice(0, 500)
         : undefined;
+      const providerBody = typeof error === 'object'
+        && error !== null
+        && 'providerBody' in error
+        ? String(
+          (error as { providerBody?: unknown }).providerBody ?? '',
+        ).slice(0, 1000)
+        : undefined;
 
       logEvent('ERROR', isTimeout ? 'AI_TIMEOUT' : 'AI_PROVIDER_FAILURE', {
         attempt,
         model: MODEL_NAME,
+        provider: 'groq',
+        requestId: input.requestId ?? 'unknown',
         providerStatus,
         providerErrorName: error instanceof Error ? error.name : 'UnknownError',
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
         providerMessage,
+        providerBody,
         destination: input.destination,
         durationMs: Date.now() - startedAt,
         totalElapsedMs: Date.now() - loopStartedAt,

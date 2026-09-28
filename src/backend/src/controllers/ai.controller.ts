@@ -22,7 +22,11 @@ export async function generateItinerary(req: Request, res: Response, next: NextF
       return;
     }
 
-    const result = await aiService.generateItineraryDraft(req.user.id, parsed.data);
+    const result = await aiService.generateItineraryDraft(
+      req.user.id,
+      parsed.data,
+      req.requestId,
+    );
     sendSuccess(res, result);
   } catch (err) { next(err); }
 }

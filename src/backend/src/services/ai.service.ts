@@ -40,7 +40,8 @@ export interface AiItineraryResult {
 
 export async function generateItineraryDraft(
   userId: string,
-  input: GenerateItineraryRequest
+  input: GenerateItineraryRequest,
+  requestId?: string,
 ): Promise<AiItineraryResult> {
   // 1. Trip phải tồn tại, thuộc Employee (ai-feature-spec.md §9: 403 NOT_OWNER)
   const trip = await prisma.trip.findUnique({
@@ -93,6 +94,7 @@ export async function generateItineraryDraft(
     preferences: input.preferences,
     hotelLimitPerNight: HOTEL_LIMIT_PER_NIGHT[trip.employee.jobGrade],
     perDiemPerDay: PER_DIEM_RATE[trip.destinationType],
+    requestId,
   });
 
   // 5. Normalize response theo API contract (API.md §10: itemDate, budgetCap)
