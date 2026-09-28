@@ -100,7 +100,7 @@ describe('Gemini itinerary client', () => {
       model: 'openai/gpt-oss-20b',
       config: expect.objectContaining({
         responseMimeType: 'application/json',
-        responseFormatType: 'json_object',
+        responseFormatType: 'json_schema',
       }),
     }));
     expect(request.systemContents).toContain('Toàn bộ activity, location và notes phải bằng tiếng Việt');
