@@ -67,12 +67,13 @@ describe('Gemini itinerary client', () => {
     geminiMocks.generateContent.mockResolvedValue(response(validDraft));
     fetchMock.mockImplementation(async (_url: string, init: RequestInit) => {
       const request = JSON.parse(String(init.body)) as {
-        messages: Array<{ content: string }>;
+        messages: Array<{ role: string; content: string }>;
         response_format?: { type?: string };
       };
       const mockedResponse = await geminiMocks.generateContent({
         model: 'openai/gpt-oss-20b',
         contents: request.messages[1]?.content ?? '',
+        systemContents: request.messages[0]?.content ?? '',
         config: {
           responseMimeType: 'application/json',
           responseFormatType: request.response_format?.type,
@@ -86,7 +87,11 @@ describe('Gemini itinerary client', () => {
 
   it('requests structured JSON and includes validated policy references in the prompt', async () => {
     const result = await generateItinerary(input);
-    const request = geminiMocks.generateContent.mock.calls[0][0] as { contents: string; config: unknown };
+    const request = geminiMocks.generateContent.mock.calls[0][0] as {
+      contents: string;
+      systemContents: string;
+      config: unknown;
+    };
     const prompt = request.contents;
 
     expect(result.totalEstimatedCost).toBe(200_000);
@@ -98,6 +103,8 @@ describe('Gemini itinerary client', () => {
         responseFormatType: 'json_object',
       }),
     }));
+    expect(request.systemContents).toContain('Toàn bộ activity, location và notes phải bằng tiếng Việt');
+    expect(request.systemContents).toContain('{"items":[...]}');
     expect(prompt).toContain('1.000.000 VNĐ/đêm');
     expect(prompt).toContain('400.000 VNĐ/ngày');
     expect(prompt).toContain('Customer meeting');

@@ -73,6 +73,44 @@ const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_SLOTS = ['MORNING', 'AFTERNOON', 'EVENING', 'ALL_DAY'] as const;
 const CATEGORIES = ['MEETING', 'ACCOMMODATION', 'TRANSPORT', 'MEAL', 'OTHER'] as const;
 
+const SYSTEM_PROMPT = `Bạn là AI chuyên tạo lịch trình công tác thực tế và khả thi.
+
+Chỉ trả về đúng MỘT JSON object thuần theo cấu trúc:
+{"items":[...]}
+
+Không trả Markdown, code fence, giải thích hoặc bất kỳ nội dung nào ngoài JSON.
+Không trả array ở root và không sử dụng root key khác như "itinerary" hoặc "data".
+
+Mỗi item bắt buộc có:
+dayNumber, date, timeSlot, location, activity, category, estimatedCost, notes.
+
+QUY TẮC:
+- Toàn bộ activity, location và notes phải bằng tiếng Việt.
+- Chỉ sử dụng thông tin chuyến đi được cung cấp; không tự bịa cuộc họp, đối tác, khảo sát, khách sạn, nhà hàng, địa chỉ hoặc mục đích công tác.
+- Lịch trình phải nằm trong ngày bắt đầu và ngày kết thúc.
+- dayNumber phải đúng với date và tăng tuần tự.
+- Sắp xếp hoạt động theo thời gian hợp lý: Sáng → Trưa → Chiều → Tối.
+- Ăn trưa thuộc Trưa; ăn tối thuộc Tối.
+- Phải tính đến thời gian di chuyển hợp lý giữa điểm xuất phát và điểm đến.
+- Nếu cần di chuyển đến nơi công tác, phải bố trí di chuyển trước các hoạt động tại điểm đến.
+- Hoạt động trở về chỉ bố trí khi phù hợp, thông thường vào ngày cuối.
+- Không tạo các hoạt động mâu thuẫn về thời gian hoặc địa điểm.
+- estimatedCost phải là số nguyên không âm.
+- Tổng estimatedCost không được vượt ngân sách được cung cấp.
+- Không cố tình tạo chi phí phi thực tế chỉ để đáp ứng ngân sách.
+- Nếu không biết địa điểm chính xác, sử dụng mô tả tổng quát bằng tiếng Việt như "Khu vực trung tâm thành phố", "Khu vực lưu trú tại điểm công tác" hoặc "Điểm khởi hành tại nơi xuất phát".
+- location bắt buộc là string không rỗng, không null, không được bỏ qua và tối đa 300 ký tự.
+- Nếu thông tin không đủ để xác định một chi tiết, sử dụng mô tả tổng quát an toàn thay vì tự bịa.
+
+Trước khi trả kết quả, tự kiểm tra:
+1. Root là JSON object có key "items".
+2. Tất cả item có đầy đủ field bắt buộc.
+3. Nội dung activity, location và notes bằng tiếng Việt.
+4. Ngày và thứ tự hoạt động hợp lý.
+5. Lịch trình khả thi về thời gian và di chuyển.
+6. Không tự bịa thông tin ngoài dữ liệu đầu vào.
+7. Tổng chi phí không vượt ngân sách.`;
+
 /**
  * Groq Strict Structured Outputs yêu cầu mọi field trong object đều nằm trong
  * required và object phải có additionalProperties: false.
@@ -633,7 +671,7 @@ async function callGroq(prompt: string, deadlineAt: number): Promise<string> {
             messages: [
               {
                 role: 'system',
-                content: 'You generate business-trip itinerary data. Return exactly one raw JSON object in the form {"items":[...]}. Do not return Markdown, code fences, explanations, arrays, or alternate root keys such as itinerary or data. Every item must include dayNumber, date, timeSlot, location, activity, category, estimatedCost, and notes. The location field is required, must be a non-empty string, must not be null or omitted, and must be at most 300 characters. If an exact place is unknown, use a safe descriptive location such as "Partner office in the destination city" or "City center area". Before responding, verify every item has a valid location. Follow the user constraints exactly.',
+                content: SYSTEM_PROMPT,
               },
               {
                 role: 'user',
