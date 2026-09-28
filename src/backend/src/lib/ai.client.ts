@@ -132,6 +132,10 @@ const ITINERARY_RESPONSE_SCHEMA = {
   additionalProperties: false,
 } as const;
 
+// Kept as the application-level contract reference; provider enforcement is
+// intentionally handled by JSON mode plus parseAndValidateDraft below.
+void ITINERARY_RESPONSE_SCHEMA;
+
 // ─── Logging / environment ────────────────────────────────────────────────────
 
 function getGroqApiKey(): string {
@@ -604,12 +608,7 @@ async function callGroq(prompt: string, deadlineAt: number): Promise<string> {
               },
             ],
             response_format: {
-              type: 'json_schema',
-              json_schema: {
-                name: 'business_trip_itinerary',
-                strict: true,
-                schema: ITINERARY_RESPONSE_SCHEMA,
-              },
+              type: 'json_object',
             },
             temperature: 0.2,
           }),

@@ -66,11 +66,17 @@ describe('Gemini itinerary client', () => {
     process.env['GROQ_API_KEY'] = 'test-groq-key';
     geminiMocks.generateContent.mockResolvedValue(response(validDraft));
     fetchMock.mockImplementation(async (_url: string, init: RequestInit) => {
-      const request = JSON.parse(String(init.body)) as { messages: Array<{ content: string }> };
+      const request = JSON.parse(String(init.body)) as {
+        messages: Array<{ content: string }>;
+        response_format?: { type?: string };
+      };
       const mockedResponse = await geminiMocks.generateContent({
         model: 'openai/gpt-oss-20b',
         contents: request.messages[1]?.content ?? '',
-        config: { responseMimeType: 'application/json' },
+        config: {
+          responseMimeType: 'application/json',
+          responseFormatType: request.response_format?.type,
+        },
       });
       return new Response(JSON.stringify({
         choices: [{ message: { content: mockedResponse.text } }],
@@ -85,7 +91,13 @@ describe('Gemini itinerary client', () => {
 
     expect(result.totalEstimatedCost).toBe(200_000);
     expect(result.guardrailPass).toBe(true);
-    expect(request).toEqual(expect.objectContaining({ model: 'openai/gpt-oss-20b', config: expect.objectContaining({ responseMimeType: 'application/json' }) }));
+    expect(request).toEqual(expect.objectContaining({
+      model: 'openai/gpt-oss-20b',
+      config: expect.objectContaining({
+        responseMimeType: 'application/json',
+        responseFormatType: 'json_object',
+      }),
+    }));
     expect(prompt).toContain('1.000.000 VNĐ/đêm');
     expect(prompt).toContain('400.000 VNĐ/ngày');
     expect(prompt).toContain('Customer meeting');
