@@ -633,7 +633,7 @@ async function callGroq(prompt: string, deadlineAt: number): Promise<string> {
             messages: [
               {
                 role: 'system',
-                content: 'You generate business-trip itinerary data. Return exactly one raw JSON object in the form {"items":[...]}. Do not return Markdown, code fences, explanations, arrays, or alternate root keys such as itinerary or data. Follow the user constraints exactly.',
+                content: 'You generate business-trip itinerary data. Return exactly one raw JSON object in the form {"items":[...]}. Do not return Markdown, code fences, explanations, arrays, or alternate root keys such as itinerary or data. Every item must include dayNumber, date, timeSlot, location, activity, category, estimatedCost, and notes. The location field is required, must be a non-empty string, must not be null or omitted, and must be at most 300 characters. If an exact place is unknown, use a safe descriptive location such as "Partner office in the destination city" or "City center area". Before responding, verify every item has a valid location. Follow the user constraints exactly.',
               },
               {
                 role: 'user',
