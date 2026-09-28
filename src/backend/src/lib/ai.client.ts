@@ -693,6 +693,9 @@ async function callGroq(prompt: string, deadlineAt: number): Promise<string> {
                 schema: ITINERARY_RESPONSE_SCHEMA,
               },
             },
+            // GPT-OSS reasoning must remain hidden so it cannot interfere with
+            // the JSON-only assistant content required by Structured Outputs.
+            reasoning_format: 'hidden',
             temperature: 0.2,
           }),
           signal: controller.signal,

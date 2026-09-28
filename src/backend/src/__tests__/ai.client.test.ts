@@ -77,6 +77,7 @@ describe('Gemini itinerary client', () => {
         config: {
           responseMimeType: 'application/json',
           responseFormatType: request.response_format?.type,
+          reasoningFormat: request.reasoning_format,
         },
       });
       return new Response(JSON.stringify({
@@ -101,6 +102,7 @@ describe('Gemini itinerary client', () => {
       config: expect.objectContaining({
         responseMimeType: 'application/json',
         responseFormatType: 'json_schema',
+        reasoningFormat: 'hidden',
       }),
     }));
     expect(request.systemContents).toContain('Toàn bộ activity, location và notes phải bằng tiếng Việt');
