@@ -73,6 +73,17 @@ const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_SLOTS = ['MORNING', 'AFTERNOON', 'EVENING', 'ALL_DAY'] as const;
 const CATEGORIES = ['MEETING', 'ACCOMMODATION', 'TRANSPORT', 'MEAL', 'OTHER'] as const;
 
+const JSON_OUTPUT_CONTRACT = `RÀNG BUỘC ĐỊNH DẠNG KẾT QUẢ (BẮT BUỘC):
+Chỉ trả về một đối tượng JSON có thể phân tích được. Không trả về Markdown,
+code fence, lời giải thích, nội dung mở đầu hoặc nội dung kết thúc.
+Đối tượng JSON gốc chỉ được có đúng một khóa là "items".
+Mỗi phần tử trong "items" chỉ được có đúng 8 khóa và không có khóa nào khác:
+"dayNumber", "date", "timeSlot", "location", "activity", "category",
+"estimatedCost", "notes".
+"dayNumber" và "estimatedCost" phải là số nguyên.
+"notes" là trường bắt buộc; nếu không có ghi chú thì phải dùng giá trị null.
+Chỉ sử dụng các giá trị đã khai báo cho timeSlot và category.`;
+
 const SYSTEM_PROMPT = `Bạn là AI chuyên tạo lịch trình công tác thực tế và khả thi.
 
 Chỉ trả về đúng MỘT JSON object thuần theo cấu trúc:
@@ -667,7 +678,7 @@ async function callGroq(prompt: string, deadlineAt: number): Promise<string> {
             messages: [
               {
                 role: 'system',
-                content: SYSTEM_PROMPT,
+                content: `${SYSTEM_PROMPT}\n\n${JSON_OUTPUT_CONTRACT}`,
               },
               {
                 role: 'user',
