@@ -152,11 +152,11 @@ Font: Inter. Tiêu đề đậm (700), text phụ nhẹ màu xám, eyebrow viế
 
 ### **1.6 Grid & Layout**
 
-Layout của hệ thống dựa trên shell có độ rộng tối đa 1200px, padding x 16px trên mobile và 24px trên desktop, cùng các khoảng cách dạng card / form / section đã dùng xuyên suốt trong App.tsx.
+Layout của hệ thống dựa trên shell có độ rộng tối đa 1152px (72rem / `max-w-6xl`), padding x 16px trên mobile và 24px trên desktop, cùng các khoảng cách dạng card / form / section đã dùng xuyên suốt trong App.tsx.
 
 | Token | Giá trị | Dùng cho |
 | ----- | ----- | ----- |
-| `grid/container` | `max-width: 1200px` | Container chính của dashboard / detail page |
+| `grid/container` | `max-width: 1152px (72rem / max-w-6xl)` | Container chính của dashboard / detail page |
 | `grid/page-padding` | `16px mobile` · `24px desktop` | Padding trái-phải của layout |
 | `grid/gap-sm` | `8px` | Khoảng cách nhỏ giữa text, badge, icon |
 | `grid/gap-md` | `16px` | Gap chuẩn của card/list items |
@@ -186,7 +186,7 @@ Layout của hệ thống dựa trên shell có độ rộng tối đa 1200px, p
 ├────────────────────────────────────────────────────────────────────────────┤
 │ Page Header: [Eyebrow label | Title | Subtitle] · [Action button]         │
 ├────────────────────────────────────────────────────────────────────────────┤
-│ Main content (max-width: 1200px, centered)                                 │
+│ Main content (max-width: 1152px / 72rem, centered)                         │
 │ - Tabs / Filters (if applicable)                                           │
 │ - Cards / Form / Summary sections                                          │
 │ - Action area / Detail panel                                               │
@@ -205,7 +205,7 @@ Layout của hệ thống dựa trên shell có độ rộng tối đa 1200px, p
   - Subtitle (optional, text-sm, gray-500).
   - Action button (right side, e.g., "+ Tạo Trip Request" in emerald-600 primary style).
 - **Main Content**: 
-  - Container max-width: 1200px (max-w-6xl in Tailwind).
+  - Container max-width: 1152px / 72rem (`max-w-6xl` in Tailwind).
   - Padding: 24px left-right on desktop, 16px on mobile.
   - Background: Light gray (bg-gray-50).
   - Single-column layout, full-width below 1200px.
@@ -466,7 +466,7 @@ Dòng nhãn \+ số dự toán mờ nhỏ dưới, ô input số bên phải; h�
 
 ### **3.17 Banner cảnh báo (Alert)**
 
-3 mức: Error/Vi phạm (đỏ), Warning/Cảnh báo (vàng), Info (xanh dương).
+3 mức cơ bản: Error/Vi phạm (đỏ), Warning/Cảnh báo (vàng), Info (xanh dương). Bổ sung 2 mức ngữ cảnh quy trình: Success/Approved (emerald) và Pending (orange).
 
 | State | Hành vi |
 | ----- | ----- |
@@ -474,6 +474,10 @@ Dòng nhãn \+ số dự toán mờ nhỏ dưới, ô input số bên phải; h�
 | Warning | Chỉ nhắc nhở, không chặn, có nút "Đã hiểu" để ẩn tạm |
 | Info | Giải thích lý do một bước bổ sung xuất hiện, không có nút hành động |
 | Loading (đang chạy policy check) | Banner dạng skeleton mờ "Đang kiểm tra chính sách…" trước khi kết quả về |
+| **Success (Emerald)** | Nền `bg-emerald-50`, viền `border-emerald-200`, chữ `text-emerald-700`, padding `px-4 py-3`, bo `rounded-lg`, `text-sm flex items-start gap-2.5`; dùng để xác nhận hành động đã hoàn thành (vd: "Manager đã duyệt bổ sung — Finance có thể duyệt và đóng hồ sơ") |
+| **Pending (Orange)** | Nền `bg-orange-50`, viền `border-orange-200`, chữ `text-orange-700`, cùng padding/bo; dùng khi đang chờ bước tiếp theo (vd: "Đang chờ Manager duyệt bổ sung. Finance chỉ xem, chưa thể duyệt/đóng hồ sơ") |
+
+> **Vị trí:** Banner nằm **trong cột nội dung** (`lg:col-span-2`), không full-width qua toàn grid. Khoảng cách với phần tử tiếp theo = 16px (từ `gap-4` của `flex-col` wrapper cột). Layout wrapper dùng `items-start` để cột phụ (cột phải) bắt đầu từ mép trên, không bị kéo xuống theo chiều cao cột chính dù cột chính có banner.
 
 ### **3.18 Luồng đăng ký tài khoản (2 bước)**
 
@@ -512,13 +516,74 @@ Cố định bên phải form khai chi phí.
 
 ### **3.21 Bảng so sánh chi phí (Finance)**
 
-Liệt kê khoản mục kèm nhà cung cấp, so dự toán/thực tế/% chênh lệch.
+Component `VarianceTable` có prop `simple?: boolean` kiểm soát số cột và nhãn card. Dùng ở 2 ngữ cảnh khác nhau.
+
+#### **Variant 1 — Full (`simple={false}`, default)**
+
+Dùng ở: Manager / Employee expense review (ExpenseReviewPanel).
+
+- **Tên card**: "BẢNG SO SÁNH CHI PHÍ" (text-xs font-semibold uppercase)
+- **Số cột**: 5 — KHOẢN MỤC | DỰ TOÁN | THỰC TẾ | CHÊNH LỆCH | %
 
 | State | Mô tả |
 | ----- | ----- |
-| Default | Chênh dương \= đỏ, chênh âm (tiết kiệm) \= xanh |
+| Default | Chênh lệch dương (vượt dự toán): cột Thực tế `text-red-600`; chênh lệch âm (tiết kiệm): `text-emerald-700` |
 | Empty (chưa có hồ sơ nào cần đối soát) | Xem UX Copy §3.2 |
 | Loading | Skeleton rows, hàng "Tổng cộng" ẩn tới khi data đủ |
+
+#### **Variant 2 — Simple (`simple={true}`)**
+
+Dùng ở: Finance (FinExpense) — hiển thị chi phí thực tế đã được khai.
+
+- **Tên card**: "CHI TIẾT CHI PHÍ THỰC TẾ" (text-xs font-semibold uppercase)
+- **Số cột**: 2 — KHOẢN MỤC | THỰC TẾ
+- **Màu cột Thực tế**: luôn `text-emerald-700` (không so sánh với dự toán)
+- **Dòng mỗi khoản**: tên khoản `font-medium text-[#1b2f35]` + dòng phụ xám nhỏ (danh mục · mô tả)
+- **Dòng tổng ("Tổng cộng")**: label bold navy + số tổng thực tế `text-emerald-700`; không hiện cột dự toán / chênh lệch / %
+
+| State | Mô tả |
+| ----- | ----- |
+| Default | Mỗi khoản 2 dòng: tên + phụ đề xám; tổng luôn emerald-700 |
+| Empty (chưa có khoản chi nào) | Xem UX Copy §3.2 |
+| Loading | Skeleton rows, hàng tổng ẩn tới khi data đủ |
+
+---
+
+### **3.21A Layout trang Chi phí thực tế (Finance/FinExpense)**
+
+```text
+Grid: grid-cols-1 lg:grid-cols-3 gap-5 items-start
+
+┌─────────────────────────────────────────┬──────────────────────────┐
+│ Cột trái — lg:col-span-2               │ Cột phải                 │
+│ (flex-col gap-4)                        │ (flex-col gap-4)         │
+│                                         │                          │
+│ 1. [Nếu có] Banner thông báo            │ 1. Card "TÓM TẮT"        │
+│    - emerald: Manager đã duyệt bổ sung  │    Nhân viên, Tuyến,     │
+│    - orange:  Chờ Manager duyệt bổ sung │    Ngày, Dự toán,        │
+│                                         │    Thực tế, % chênh lệch │
+│ 2. Card "CHI TIẾT CHI PHÍ THỰC TẾ"     │    (cam nếu chờ,         │
+│    VarianceTable simple={true}          │     xanh nếu ok)         │
+│                                         │                          │
+│ 3. Card "GIẢI TRÌNH CỦA NHÂN VIÊN"     │ 2. Card "THAO TÁC"       │
+│    Nội dung text đọc-only               │    - Nút "Duyệt chi phí  │
+│    Nền amber-50                         │      & Đóng hồ sơ"       │
+│                                         │      (bg-amber-500       │
+│                                         │       hover:bg-amber-600 │
+│                                         │       text-white         │
+│                                         │       rounded-lg)        │
+│                                         │    - Hoặc text cảnh báo  │
+│                                         │      cam khi chờ duyệt   │
+│                                         │      bổ sung             │
+└─────────────────────────────────────────┴──────────────────────────┘
+```
+
+**Ghi chú:**
+- `items-start` trên grid wrapper → cột phải bắt đầu từ mép trên, không bị kéo xuống theo chiều cao cột trái dù cột trái có thêm banner.
+- Banner chỉ hiện theo điều kiện: emerald khi `requiresManagerReapproval && alreadyApproved`; orange khi `needsExplanation`.
+- Khoảng cách giữa các phần tử trong cột trái: 16px (`gap-4` của `flex-col`).
+- Khoảng cách giữa các cột: 20px (`gap-5` của grid).
+- Card "GIẢI TRÌNH CỦA NHÂN VIÊN": tiêu đề text-xs font-semibold uppercase, nội dung đọc-only, nền `bg-amber-50`.
 
 ---
 
@@ -583,7 +648,7 @@ Ví dụ mẫu câu nên dùng làm chuẩn:
 | ----- | ----- |
 | Mobile (<640px / `sm`) | Form xếp 1 cột, padding 16px, card dạng stack, action sticky full-width khi cần |
 | Tablet (640–1024px / `sm` to `lg`) | Có thể 2 cột cho layout chính, grid 2 cột cho result, actions ở hàng dưới |
-| Desktop (>=1024px / `lg`) | Layout 1–2 cột, max-width 1200px (max-w-6xl), centered 
+| Desktop (>=1024px / `lg`) | Layout 1–2 cột, max-width 1152px (72rem / max-w-6xl), centered 
 
 - Form fields nên giữ chiều cao tối thiểu đủ click: 40px + padding (`py-2.5`).
 - Trên màn hình nhỏ, ưu tiên action chính và message quan trọng ở phía trên.
@@ -679,6 +744,7 @@ Finance flow
 * Nút phê duyệt cấp cao nhất (Travel Admin — cấp 2\) đổi từ xanh lá sang tím để phân biệt với "Duyệt yêu cầu" cấp Manager.  
 * Khi hồ sơ vi phạm ngưỡng chính sách (ngân sách \>20M, chi phí thực tế vượt dự toán \>10%...), banner đỏ luôn xuất hiện ngay dưới tiêu đề trang trước mọi nội dung khác, kèm badge "VI PHẠM"/"CẢNH BÁO" trên danh sách.  
 * Nút "Xuất PDF" (secondary, có icon) là hành động phụ cố định góc trên-phải các trang chi tiết chi phí, không cạnh tranh vị trí với nút hành động chính ở cột phải.
+* Bảng chi phí Finance (`VarianceTable`) có 2 variant: **Full** (5 cột, dùng ở Manager/Employee review, tên card "BẢNG SO SÁNH CHI PHÍ") và **Simple** (2 cột chỉ KHOẢN MỤC | THỰC TẾ, dùng ở Finance FinExpense, tên card "CHI TIẾT CHI PHÍ THỰC TẾ"). Không nhầm lẫn giữa 2 variant này.
 
 ## **5\. Handoff Checklist – Chuyển giao cho Dev / QA**
 

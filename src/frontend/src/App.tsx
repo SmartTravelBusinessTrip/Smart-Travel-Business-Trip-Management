@@ -1228,7 +1228,7 @@ function ExpenseReviewPanel({ tripId }: { tripId: string }) {
 }
 
 
-function VarianceTable({ items, totalBudget }: { items: ExpenseItem[]; totalBudget: number }) {
+function VarianceTable({ items, totalBudget, simple = false }: { items: ExpenseItem[]; totalBudget: number; simple?: boolean }) {
   const totalActual = items.reduce((s, i) => s + i.actual,   0);
   const totalDiff   = totalActual - totalBudget;
   const totalPct    = totalBudget > 0 ? ((totalDiff / totalBudget) * 100).toFixed(1) : "—";
@@ -1240,10 +1240,10 @@ function VarianceTable({ items, totalBudget }: { items: ExpenseItem[]; totalBudg
         <thead>
           <tr className="border-b border-gray-200">
             <th className="text-left py-2 pr-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Khoản mục</th>
-            <th className="text-right py-2 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Dự toán</th>
+            {!simple && <th className="text-right py-2 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Dự toán</th>}
             <th className="text-right py-2 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Thực tế</th>
-            <th className="text-right py-2 pl-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Chênh lệch</th>
-            <th className="text-right py-2 pl-3 text-xs font-bold text-gray-400 uppercase tracking-wider">%</th>
+            {!simple && <th className="text-right py-2 pl-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Chênh lệch</th>}
+            {!simple && <th className="text-right py-2 pl-3 text-xs font-bold text-gray-400 uppercase tracking-wider">%</th>}
           </tr>
         </thead>
         <tbody>
@@ -1256,14 +1256,18 @@ function VarianceTable({ items, totalBudget }: { items: ExpenseItem[]; totalBudg
                   <p className="font-medium text-[#1b2f35]">{item.label}</p>
                   <p className="text-xs text-gray-400">{catLabel(item.category)}{item.description ? ` · ${item.description}` : ""}</p>
                 </td>
-                <td className="py-2.5 px-3 text-right text-gray-500">{item.budgeted == null ? "—" : `${item.budgeted.toLocaleString("vi-VN")}đ`}</td>
-                <td className={`py-2.5 px-3 text-right font-semibold ${item.budgeted != null && item.actual > item.budgeted ? "text-red-600" : "text-emerald-700"}`}>{item.actual.toLocaleString("vi-VN")}đ</td>
-                <td className={`py-2.5 pl-3 text-right font-semibold ${diff != null && diff > 0 ? "text-red-500" : diff != null && diff < 0 ? "text-emerald-600" : "text-gray-400"}`}>
-                  {diff == null ? "—" : diff > 0 ? `+${diff.toLocaleString("vi-VN")}` : diff < 0 ? `-${Math.abs(diff).toLocaleString("vi-VN")}` : "—"}{diff == null ? "" : "đ"}
-                </td>
-                <td className={`py-2.5 pl-3 text-right text-[11px] font-bold ${diff != null && diff > 0 ? "text-red-500" : diff != null && diff < 0 ? "text-emerald-600" : "text-gray-400"}`}>
-                  {pct == null ? "—" : `${diff! > 0 ? "+" : ""}${pct}%`}
-                </td>
+                {!simple && <td className="py-2.5 px-3 text-right text-gray-500">{item.budgeted == null ? "—" : `${item.budgeted.toLocaleString("vi-VN")}đ`}</td>}
+                <td className={`py-2.5 px-3 text-right font-semibold ${!simple && item.budgeted != null && item.actual > item.budgeted ? "text-red-600" : "text-emerald-700"}`}>{item.actual.toLocaleString("vi-VN")}đ</td>
+                {!simple && (
+                  <td className={`py-2.5 pl-3 text-right font-semibold ${diff != null && diff > 0 ? "text-red-500" : diff != null && diff < 0 ? "text-emerald-600" : "text-gray-400"}`}>
+                    {diff == null ? "—" : diff > 0 ? `+${diff.toLocaleString("vi-VN")}` : diff < 0 ? `-${Math.abs(diff).toLocaleString("vi-VN")}` : "—"}{diff == null ? "" : "đ"}
+                  </td>
+                )}
+                {!simple && (
+                  <td className={`py-2.5 pl-3 text-right text-[11px] font-bold ${diff != null && diff > 0 ? "text-red-500" : diff != null && diff < 0 ? "text-emerald-600" : "text-gray-400"}`}>
+                    {pct == null ? "—" : `${diff! > 0 ? "+" : ""}${pct}%`}
+                  </td>
+                )}
               </tr>
             );
           })}
@@ -1271,14 +1275,18 @@ function VarianceTable({ items, totalBudget }: { items: ExpenseItem[]; totalBudg
         <tfoot>
           <tr className="border-t-2 border-gray-200">
             <td className="py-3 pr-4 font-bold text-[#1b2f35]">Tổng cộng</td>
-            <td className="py-3 px-3 text-right font-bold text-gray-600">{totalBudget.toLocaleString("vi-VN")}đ</td>
-            <td className={`py-3 px-3 text-right font-bold ${totalActual > totalBudget ? "text-red-600" : "text-emerald-700"}`}>{totalActual.toLocaleString("vi-VN")}đ</td>
-            <td className={`py-3 pl-3 text-right font-bold ${totalDiff > 0 ? "text-red-500" : totalDiff < 0 ? "text-emerald-600" : "text-gray-400"}`}>
-              {totalDiff !== 0 ? `${totalDiff > 0 ? "+" : ""}${totalDiff.toLocaleString("vi-VN")}đ` : "—"}
-            </td>
-            <td className={`py-3 pl-3 text-right text-xs font-bold ${totalDiff > 0 ? "text-red-500" : totalDiff < 0 ? "text-emerald-600" : "text-gray-400"}`}>
-              {totalDiff !== 0 ? `${totalDiff > 0 ? "+" : ""}${totalPct}%` : "—"}
-            </td>
+            {!simple && <td className="py-3 px-3 text-right font-bold text-gray-600">{totalBudget.toLocaleString("vi-VN")}đ</td>}
+            <td className={`py-3 px-3 text-right font-bold ${!simple && totalActual > totalBudget ? "text-red-600" : "text-emerald-700"}`}>{totalActual.toLocaleString("vi-VN")}đ</td>
+            {!simple && (
+              <td className={`py-3 pl-3 text-right font-bold ${totalDiff > 0 ? "text-red-500" : totalDiff < 0 ? "text-emerald-600" : "text-gray-400"}`}>
+                {totalDiff !== 0 ? `${totalDiff > 0 ? "+" : ""}${totalDiff.toLocaleString("vi-VN")}đ` : "—"}
+              </td>
+            )}
+            {!simple && (
+              <td className={`py-3 pl-3 text-right text-xs font-bold ${totalDiff > 0 ? "text-red-500" : totalDiff < 0 ? "text-emerald-600" : "text-gray-400"}`}>
+                {totalDiff !== 0 ? `${totalDiff > 0 ? "+" : ""}${totalPct}%` : "—"}
+              </td>
+            )}
           </tr>
         </tfoot>
       </table>
@@ -2649,25 +2657,25 @@ function FinExpense({ user, onLogout, trip, onClose, onBack }: {
       <PageHeader label={trip.tripCode} title="Chi phí thực tế" subtitle={`${trip.from} — ${trip.to} · ${trip.employeeName}`} action={PDF_EXPORT_ALLOWED_STATUSES.includes(trip.status) ? <ExportBtn tripId={trip.id} /> : undefined} />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
         <div className="mb-4"><button onClick={onBack} className="text-xs text-gray-400 hover:text-gray-600">← Quay lại</button></div>
-        {requiresManagerReapproval && alreadyApproved && (
-          <div className="max-w-3xl mb-4 flex items-start gap-2.5 px-4 py-3 rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-700 text-sm">
-            <div>Chi phí vượt <strong>{overPctText}</strong> đã được Manager phê duyệt bổ sung — Finance có thể duyệt và đóng hồ sơ.</div>
-          </div>
-        )}
-        {needsExplanation && (
-          <div className="max-w-3xl mb-4 flex items-start gap-2.5 px-4 py-3 rounded-lg border bg-orange-50 border-orange-200 text-orange-700 text-sm">
-            <div>Chi phí thực tế vượt dự toán <strong>{overPctText}</strong> — đang chờ Manager duyệt bổ sung. Finance chỉ xem, chưa thể duyệt/đóng hồ sơ.</div>
-          </div>
-        )}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
           <div className="lg:col-span-2 flex flex-col gap-4">
+            {requiresManagerReapproval && alreadyApproved && (
+              <div className="flex items-start gap-2.5 px-4 py-3 rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-700 text-sm">
+                <div>Chi phí vượt <strong>{overPctText}</strong> đã được Manager phê duyệt bổ sung — Finance có thể duyệt và đóng hồ sơ.</div>
+              </div>
+            )}
+            {needsExplanation && (
+              <div className="flex items-start gap-2.5 px-4 py-3 rounded-lg border bg-orange-50 border-orange-200 text-orange-700 text-sm">
+                <div>Chi phí thực tế vượt dự toán <strong>{overPctText}</strong> — đang chờ Manager duyệt bổ sung. Finance chỉ xem, chưa thể duyệt/đóng hồ sơ.</div>
+              </div>
+            )}
             <Card className="p-6">
-              <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase mb-4">Bảng so sánh chi phí</p>
-              <VarianceTable items={items} totalBudget={totalBudgeted} />
+              <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase mb-4">Chi tiết chi phí thực tế</p>
+              <VarianceTable items={items} totalBudget={totalBudgeted} simple={true} />
             </Card>
             {/* BR-TR-05: Finance phải đọc được giải trình chênh lệch của nhân viên */}
             <Card className="p-5">
-              <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase mb-2">Giải trình chênh lệch của nhân viên</p>
+              <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase mb-2">Giải trình của nhân viên</p>
               <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
                 {expense?.justification?.trim() || "— Chưa có giải trình —"}
               </p>

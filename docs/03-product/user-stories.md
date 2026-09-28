@@ -125,10 +125,19 @@
     *Given* Danh sách Expense Items đã được nhập  
     *When* Employee xem bảng tổng hợp trước khi nộp  
     *Then* Hệ thống tự động tính `Tổng chi thực tế`, hiển thị bảng đối chiếu `Dự toán ban đầu` vs `Thực tế` và tỷ lệ chênh lệch `% Variance` (theo `REQ-TR-08`).
-  - **AC 7.3 (Yêu cầu giải trình khi chi phí vượt dự toán ≤ 10%):**  
+  - **AC 7.3 (Không yêu cầu phê duyệt bổ sung khi không vượt dự toán):**  
+    *Given* Tổng chi phí thực tế ≤ Tổng dự toán ban đầu
+    *When* Employee bấm Submit Expense Claim
+    *Then* Hệ thống chuyển Expense Claim sang trạng thái EXPENSE_SUBMITTED để Finance thực hiện kiểm tra và thanh quyết toán theo quy trình.
+  - **AC 7.4 (Yêu cầu giải trình khi chi phí vượt dự toán ≤ 10%):**  
     *Given* Tổng chi phí thực tế vượt tổng dự toán ban đầu ở mức ≤ 10%  
     *When* Employee bấm nộp Expense Claim  
     *Then* Hệ thống yêu cầu nhập lý do giải trình phát sinh trước khi chuyển trạng thái sang `EXPENSE_SUBMITTED` (theo `BR-TR-05`).
+  - **AC 7.5 (Yêu cầu Manager phê duyệt bổ sung khi vượt > 10%):**  
+    *Given* Tổng chi phí thực tế vượt tổng dự toán ban đầu > 10% 
+    *When* Employee bấm Submit Expense Claim 
+    *Then* Hệ thống chuyển Expense Claim sang trạng thái PENDING_MANAGER_APPROVAL, hệ thống yêu cầu nhập lý do giải trình, yêu cầu Manager phê duyệt bổ sung và không cho phép Finance đóng hồ sơ khi chưa có phê duyệt của Manager.
+  
 
 ---
 
