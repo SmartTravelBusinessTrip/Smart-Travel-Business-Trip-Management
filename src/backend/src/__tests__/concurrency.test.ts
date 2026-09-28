@@ -327,7 +327,7 @@ describe('FIX-08: HTTP mutations over independent PostgreSQL connections', () =>
   });
   it.each([['APPROVED', 'start'], ['ONGOING', 'end']])('double %s -> %s has one winner', async (status, action) => {
     await trip(status);
-    if (action === 'start') await db.itineraryItem.create({ data: { ...aiItem, id: 'start-itinerary', tripId: 'trip', dayNumber: 1 } });
+    if (action === 'start') await db.itineraryItem.create({ data: { ...aiItem, id: 'start-itinerary', tripId: 'trip', dayNumber: 1, itemDate: new Date('2099-10-01T00:00:00.000Z') } });
     oneWinner(await Promise.all([post(0, `trip/${action}`, 'EMPLOYEE'), post(1, `trip/${action}`, 'EMPLOYEE')]));
     expect(await db.auditLog.count()).toBe(1);
   });
