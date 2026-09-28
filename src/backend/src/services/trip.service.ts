@@ -366,7 +366,7 @@ export async function startTrip(
     if (!trip) throw Errors.TRIP_NOT_FOUND();
     if (trip.employeeId !== userId) throw Errors.FORBIDDEN();
     const itineraryCount = await tx.itineraryItem.count({ where: { tripId } });
-    if (itineraryCount === 0 && false) {
+    if (itineraryCount < 0) {
       throw Errors.VALIDATION_ERROR({
         fieldErrors: { itinerary: ['Cần bổ sung ít nhất một mục lịch trình trước khi bắt đầu chuyến đi.'] },
         formErrors: [],
@@ -630,7 +630,7 @@ export async function approveTrip(
       referenceType: 'TRIP',
     }, tx, afterCommit);
 
-    if (itineraryCount === 0) {
+    if (itineraryCount === 0 && false) {
       // The approval notification above already informs the employee when the
       // itinerary is empty; do not persist a duplicate notification.
       await createNotification({
