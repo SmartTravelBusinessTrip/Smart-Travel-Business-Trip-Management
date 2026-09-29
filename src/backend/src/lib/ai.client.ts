@@ -693,9 +693,14 @@ async function callGroq(prompt: string, deadlineAt: number): Promise<string> {
                 schema: ITINERARY_RESPONSE_SCHEMA,
               },
             },
-            // GPT-OSS reasoning must remain hidden so it cannot interfere with
-            // the JSON-only assistant content required by Structured Outputs.
+            // GPT-OSS models require reasoning_effort alongside reasoning_format.
+            // 'hidden' keeps reasoning tokens out of assistant content so the
+            // Structured Outputs response remains pure JSON.
+            // 'low' is the minimum valid value; sufficient for structured data.
             reasoning_format: 'hidden',
+            reasoning_effort: 'low',
+            // Cap output to avoid runaway token usage; 65 536 is the model max.
+            max_completion_tokens: 4096,
             temperature: 0.2,
           }),
           signal: controller.signal,
@@ -707,7 +712,7 @@ async function callGroq(prompt: string, deadlineAt: number): Promise<string> {
         const errorBody = (() => {
           try {
             return JSON.parse(rawErrorBody) as {
-              error?: { message?: unknown };
+              error?: { message?: unknown; type?: unknown; code?: unknown };
             };
           } catch {
             return null;
@@ -717,11 +722,33 @@ async function callGroq(prompt: string, deadlineAt: number): Promise<string> {
         const providerMessage = typeof errorBody?.error?.message === 'string'
           ? errorBody.error.message.slice(0, 500)
           : undefined;
+        const providerErrorType = typeof errorBody?.error?.type === 'string'
+          ? errorBody.error.type
+          : undefined;
+        const providerErrorCode = typeof errorBody?.error?.code === 'string'
+          ? errorBody.error.code
+          : undefined;
+
+        // Log 4xx immediately — these indicate a request-level config error
+        // (bad model, invalid param, malformed JSON) and should NOT be retried.
+        if (response.status >= 400 && response.status < 500) {
+          logEvent('ERROR', 'AI_PROVIDER_CLIENT_ERROR', {
+            model: MODEL_NAME,
+            providerStatus: response.status,
+            providerMessage,
+            providerErrorType,
+            providerErrorCode,
+            providerBody: safeProviderBody(rawErrorBody, apiKey),
+            attempt,
+          });
+        }
 
         throw Object.assign(new Error('GROQ_HTTP_ERROR'), {
           status: response.status,
           headers: response.headers,
           providerMessage,
+          providerErrorType,
+          providerErrorCode,
           providerBody: safeProviderBody(rawErrorBody, apiKey),
         });
       }
@@ -750,6 +777,20 @@ async function callGroq(prompt: string, deadlineAt: number): Promise<string> {
 
       if (status === 429) {
         throw new GroqProviderRateLimitedError(getRetryAfterMs(error));
+      }
+
+      // 4xx errors (bad request, auth, not found, etc.) are non-retryable —
+      // they indicate a configuration or payload problem, not a transient blip.
+      if (status !== undefined && status >= 400 && status < 500) {
+        logEvent('ERROR', 'AI_PROVIDER_REQUEST_ERROR', {
+          model: MODEL_NAME,
+          providerStatus: status,
+          attempt,
+          providerMessage: typeof error === 'object' && error !== null && 'providerMessage' in error
+            ? String((error as { providerMessage?: unknown }).providerMessage ?? '')
+            : undefined,
+        });
+        throw error;
       }
 
       if (!isTransientProviderStatus(status)) {

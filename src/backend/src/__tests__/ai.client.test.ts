@@ -69,6 +69,9 @@ describe('Gemini itinerary client', () => {
       const request = JSON.parse(String(init.body)) as {
         messages: Array<{ role: string; content: string }>;
         response_format?: { type?: string };
+        reasoning_format?: string;
+        reasoning_effort?: string;
+        max_completion_tokens?: number;
       };
       const mockedResponse = await geminiMocks.generateContent({
         model: 'openai/gpt-oss-20b',
@@ -78,6 +81,8 @@ describe('Gemini itinerary client', () => {
           responseMimeType: 'application/json',
           responseFormatType: request.response_format?.type,
           reasoningFormat: request.reasoning_format,
+          reasoningEffort: request.reasoning_effort,
+          maxCompletionTokens: request.max_completion_tokens,
         },
       });
       return new Response(JSON.stringify({
@@ -103,6 +108,8 @@ describe('Gemini itinerary client', () => {
         responseMimeType: 'application/json',
         responseFormatType: 'json_schema',
         reasoningFormat: 'hidden',
+        reasoningEffort: 'low',
+        maxCompletionTokens: 4096,
       }),
     }));
     expect(request.systemContents).toContain('Toàn bộ activity, location và notes phải bằng tiếng Việt');
