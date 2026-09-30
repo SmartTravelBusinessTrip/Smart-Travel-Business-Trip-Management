@@ -38,9 +38,10 @@
     *When* Employee nhấn nút "Tạo lịch trình bằng AI"  
     *Then* Hệ thống gửi payload `{tripId, destination, days, budget, preferences?}` sang AI Service (đính kèm `tripId` để AI Service xác nhận đúng Trip Request đang xử lý) và hiển thị danh sách hoạt động phân bổ theo từng ngày (buổi sáng, buổi chiều, buổi tối, gợi ý khách sạn) với tổng chi phí ước tính ≤ tổng ngân sách ban đầu (tuân thủ `BR-TR-07`).
   - **AC 2.2 (Guardrail chặn AI vượt ngân sách):**  
-    *Given* AI Service sinh ra lịch trình có tổng chi phí ước tính vượt quá ngân sách Employee đã nhập  
-    *When* Hệ thống thực hiện kiểm tra server-side validation  
-    *Then* Hệ thống từ chối áp dụng bản nháp đó, thông báo "Lịch trình gợi ý vượt ngân sách cho phép, đang điều chỉnh lại" và yêu cầu AI tái phân bổ theo đúng `BR-TR-07`.
+    *Given* Trip Request đã có thông tin hợp lệ 
+    *When* Employee nhấn “Tiếp tục” mà không sử dụng AI
+    *Then* Hệ thống chuyển sang bước tiếp theo thành công và không yêu cầu sinh lịch trình bằng AI.
+    
 
 ---
 
