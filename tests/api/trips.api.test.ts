@@ -1,5 +1,5 @@
 /**
- * trips.api.test.ts — Integration Tests: POST /api/v1/trips
+ * trips.api.test.ts — API Tests: trip request endpoints
  *
  * Kiểm thử toàn bộ HTTP request → middleware → controller → response cycle.
  * Dùng Supertest để gửi request in-process (không cần server listen thực).
@@ -23,13 +23,13 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
-import { createApp } from '../app';
-import { TEST_USERS, VALID_TRIP_PAYLOAD } from './setup';
+import { createApp } from '../../src/backend/src/app';
+import { TEST_USERS, VALID_TRIP_PAYLOAD } from '../../src/backend/src/__tests__/setup';
 
 // ─── Mock Prisma ───────────────────────────────────────────────────────────────
 // Mock toàn bộ Prisma client trước khi app.ts import nó.
 // vi.mock() được hoisted lên đầu file tự động bởi Vitest.
-vi.mock('../prisma/client', () => ({
+vi.mock('../../src/backend/src/prisma/client', () => ({
   default: {
     trip: {
       create: vi.fn(),
@@ -59,7 +59,7 @@ vi.mock('../prisma/client', () => ({
 // ─── Mock trip.service ─────────────────────────────────────────────────────────
 // Mock ở service layer để test controller + middleware layer trong isolation.
 // Từng test case sẽ mock return value cụ thể.
-vi.mock('../services/trip.service', () => ({
+vi.mock('../../src/backend/src/services/trip.service', () => ({
   createTrip: vi.fn(),
   getAllTrips: vi.fn(),
   getTripById: vi.fn(),
@@ -77,8 +77,8 @@ vi.mock('../services/trip.service', () => ({
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-import * as tripService from '../services/trip.service';
-import type { CreateTripResult } from '../services/trip.service';
+import * as tripService from '../../src/backend/src/services/trip.service';
+import type { CreateTripResult } from '../../src/backend/src/services/trip.service';
 
 /**
  * MOCK_TRIP — Dữ liệu trip mock trả về từ service.
@@ -383,7 +383,7 @@ describe('POST /api/v1/trips/:id/submit', () => {
   // ── T-09: Business Rule — invalid state transition ─────────────────────────
   it('[BIZ] T-09 — 409: submit trip đã CLOSED → INVALID_STATUS_TRANSITION', async () => {
     // Arrange: service throw lỗi state machine (BR-TR-05)
-    const { AppError } = await import('../middlewares/error-handler');
+    const { AppError } = await import('../../src/backend/src/middlewares/error-handler');
     vi.mocked(tripService.submitTrip).mockRejectedValueOnce(
       new AppError(409, 'INVALID_STATUS_TRANSITION', 'Không thể chuyển từ trạng thái CLOSED sang SUBMITTED.')
     );
@@ -422,6 +422,22 @@ describe('POST /api/v1/trips/:id/approve', () => {
     expect(res.body.data.status).toBe('MANAGER_REVIEWING');
   });
 
+  it('[HAPPY] A-01b — TRAVEL_ADMIN có quyền gọi endpoint approve', async () => {
+    vi.mocked(tripService.approveTrip).mockResolvedValueOnce({
+      ...MOCK_TRIP,
+      status: 'MANAGER_REVIEWING',
+    });
+
+    const res = await request(app)
+      .post('/api/v1/trips/trip-uuid-001/approve')
+      .set('Authorization', `Bearer ${TEST_USERS.travelAdmin()}`)
+      .send({ comment: 'Đồng ý' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe('MANAGER_REVIEWING');
+    expect(tripService.approveTrip).toHaveBeenCalledOnce();
+  });
+
   // ── A-02: RBAC — EMPLOYEE không được approve ──────────────────────────────
   it('[AUTH] A-02 — 403: EMPLOYEE gọi approve (MANAGER/TRAVEL_ADMIN only) → FORBIDDEN', async () => {
     const res = await request(app)
@@ -447,6 +463,33 @@ describe('POST /api/v1/trips/:id/approve', () => {
     expect(res.body.error).toBe('UNAUTHORIZED');
   });
 
+});
+
+describe('POST /api/v1/trips/:id/close', () => {
+  it('[HAPPY] FINANCE có quyền đóng Trip', async () => {
+    vi.mocked(tripService.closeTrip).mockResolvedValueOnce({
+      ...MOCK_TRIP,
+      status: 'CLOSED',
+    });
+
+    const res = await request(app)
+      .post('/api/v1/trips/trip-uuid-001/close')
+      .set('Authorization', `Bearer ${TEST_USERS.finance()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe('CLOSED');
+    expect(tripService.closeTrip).toHaveBeenCalledOnce();
+  });
+
+  it('[AUTH] MANAGER không có quyền đóng Trip', async () => {
+    const res = await request(app)
+      .post('/api/v1/trips/trip-uuid-001/close')
+      .set('Authorization', `Bearer ${TEST_USERS.manager()}`);
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('FORBIDDEN');
+    expect(tripService.closeTrip).not.toHaveBeenCalled();
+  });
 });
 
 // ══════════════════════════════════════════════════════════════════════════════

@@ -31,10 +31,9 @@ export default defineConfig({
     // Glob: unit tests trong src/ VÀ tests/unit/ (Task 4 output)
     // VÀ integration tests trong tests/integration/ (Task 5 output)
     include: [
-      'src/**/*.test.ts',
-      'src/**/*.api.test.ts',
       '../../tests/unit/**/*.test.ts',
       '../../tests/integration/**/*.test.ts',
+      '../../tests/api/**/*.test.ts',
     ],
 
     // Bỏ qua dist/ và node_modules/

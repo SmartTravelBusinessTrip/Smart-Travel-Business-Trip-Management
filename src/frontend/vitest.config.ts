@@ -24,8 +24,8 @@ export default mergeConfig(
       // Setup file: import @testing-library/jest-dom extend-matchers
       setupFiles: ['./src/__tests__/setup.ts'],
 
-      // Glob: tất cả *.test.tsx và *.test.ts trong src/
-      include: ['src/**/*.test.{ts,tsx}'],
+      // Frontend component/unit suites share the repository-level test structure.
+      include: ['../../tests/unit/frontend/**/*.test.{ts,tsx}'],
       exclude: ['node_modules/**', 'dist/**'],
 
       // Globals: true — dùng describe/it/expect không cần import

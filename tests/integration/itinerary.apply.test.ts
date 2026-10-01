@@ -1,10 +1,10 @@
 import { beforeAll, afterAll, beforeEach, describe, it, expect, vi } from 'vitest';
-import prisma from '../prisma/client';
-import { addItineraryItem, addBatchItineraryItems, getItinerary, updateItineraryItem, deleteItineraryItem } from '../services/itinerary.service';
-import { AuditActions } from '../services/audit.service';
+import prisma from '../../src/backend/src/prisma/client';
+import { addItineraryItem, addBatchItineraryItems, getItinerary, updateItineraryItem, deleteItineraryItem } from '../../src/backend/src/services/itinerary.service';
+import { AuditActions } from '../../src/backend/src/services/audit.service';
 import express from 'express';
 import request from 'supertest';
-import { addItineraryItem as addController } from '../controllers/itinerary.controller';
+import { addItineraryItem as addController } from '../../src/backend/src/controllers/itinerary.controller';
 
 const input = {
   itemDate: '2026-10-01', timeSlot: 'MORNING', location: 'Office',

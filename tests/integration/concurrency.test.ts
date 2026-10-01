@@ -13,7 +13,7 @@ const harness = await vi.hoisted(async () => {
 });
 
 // Only select the connection for each request; every database operation is real.
-vi.mock('../prisma/client', () => ({ default: new Proxy(harness.clients[0], {
+vi.mock('../../src/backend/src/prisma/client', () => ({ default: new Proxy(harness.clients[0], {
   get(_target, name) {
     const client = harness.clients[harness.context.getStore() ?? 0];
     const value = Reflect.get(client, name);
@@ -21,12 +21,12 @@ vi.mock('../prisma/client', () => ({ default: new Proxy(harness.clients[0], {
   },
 }) }));
 
-import tripsRouter from '../routes/trips.routes';
-import expenseRouter from '../routes/expense.routes';
-import itineraryRouter from '../routes/itinerary.routes';
-import { errorHandler } from '../middlewares/error-handler';
-import { runMutation } from '../services/mutation.service';
-import * as sseEmitter from '../lib/sse-emitter';
+import tripsRouter from '../../src/backend/src/routes/trips.routes';
+import expenseRouter from '../../src/backend/src/routes/expense.routes';
+import itineraryRouter from '../../src/backend/src/routes/itinerary.routes';
+import { errorHandler } from '../../src/backend/src/middlewares/error-handler';
+import { runMutation } from '../../src/backend/src/services/mutation.service';
+import * as sseEmitter from '../../src/backend/src/lib/sse-emitter';
 
 const db = harness.clients[0];
 async function createFailureTrigger(name: string, table: string, event: string): Promise<void> {

@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { createTripSchema, checkPerDiemWarning, PER_DIEM_RATE } from './trip.validator';
+import { createTripSchema, checkPerDiemWarning, PER_DIEM_RATE } from '../../src/backend/src/utils/validators/trip.validator';
 
 // ─── Helper: ngày trong tương lai xa ──────────────────────────────────────────
 // Dùng năm 2099 để tránh flaky test khi chạy vào ngày gần deadline

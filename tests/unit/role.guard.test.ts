@@ -14,8 +14,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { roleGuard, type UserRole } from './role.guard';
-import { AppError } from './error-handler';
+import { roleGuard, type UserRole } from '../../src/backend/src/middlewares/role.guard';
+import { AppError } from '../../src/backend/src/middlewares/error-handler';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

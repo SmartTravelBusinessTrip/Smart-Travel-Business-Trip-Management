@@ -19,7 +19,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TripRequestForm } from '../components/TripRequestForm';
+import { TripRequestForm } from '../../../src/frontend/src/components/TripRequestForm';
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 beforeEach(() => {

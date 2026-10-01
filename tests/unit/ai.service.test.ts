@@ -5,15 +5,15 @@ const aiServiceMocks = vi.hoisted(() => ({
   generateItinerary: vi.fn(),
 }));
 
-vi.mock('../prisma/client', () => ({
+vi.mock('../../src/backend/src/prisma/client', () => ({
   default: { trip: { findUnique: aiServiceMocks.findTrip } },
 }));
 
-vi.mock('../lib/ai.client', () => ({
+vi.mock('../../src/backend/src/lib/ai.client', () => ({
   generateItinerary: aiServiceMocks.generateItinerary,
 }));
 
-import { generateItineraryDraft } from '../services/ai.service';
+import { generateItineraryDraft } from '../../src/backend/src/services/ai.service';
 
 const request = {
   tripId: '11111111-1111-4111-8111-111111111111',

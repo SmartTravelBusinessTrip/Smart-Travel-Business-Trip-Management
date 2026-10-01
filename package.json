@@ -16,6 +16,13 @@
     "type-check": "npm --prefix src/backend run type-check",
     "db:migrate:prod": "npm --prefix src/backend run db:migrate:prod",
     "test:be": "npm --prefix src/backend run test:run",
+    "test:unit": "npm run test:unit:be && npm run test:unit:fe",
+    "test:unit:be": "npm --prefix src/backend run test:unit",
+    "test:unit:fe": "npm --prefix src/frontend run test:run",
+    "test:integration": "npm --prefix src/backend run test:integration",
+    "test:api": "npm --prefix src/backend run test:api",
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:list": "playwright test --list --project=chromium",
     "test:fe": "npm --prefix src/frontend run test:run",
     "test:run": "npm run test:be && npm run test:fe",
     "test:coverage:be": "npm --prefix src/backend run test:coverage",
@@ -25,6 +32,7 @@
     "dev:fe": "npm --prefix src/frontend run dev"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/jsonwebtoken": "9.0.10",
     "@types/supertest": "7.2.1",
     "jsonwebtoken": "9.0.3",

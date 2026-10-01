@@ -21,6 +21,8 @@ src/frontend/node_modules/
 dist/
 build/
 coverage/
+playwright-report/
+test-results/
 src/backend/dist/
 src/frontend/dist/
 src/backend/coverage/
