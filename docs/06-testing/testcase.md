@@ -1,6 +1,6 @@
 # Test Case — US-01 đến US-10
 
-**Cơ sở rà soát:** `requirements.md`, `business-rules.md`, PRD, user flow, user stories, story specs, OpenAPI, Design System và code frontend/backend hiện tại. Các test case mô tả hành vi quan sát được; mọi case ở trạng thái `NOT RUN`.
+**Cơ sở rà soát:** `requirements.md`, `business-rules.md`, PRD, user flow, user stories, story specs, OpenAPI, Design System và code frontend/backend hiện tại. Các test case mô tả hành vi quan sát được dưới hình thức Manual.
 
 ## US-01
 

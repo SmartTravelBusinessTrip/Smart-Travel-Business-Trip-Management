@@ -8,6 +8,7 @@ Các scenario dưới đây gom những Test Case thành các hành trình nghi�
 - User Story liên quan: US-01, US-02, US-04
 - Test Case liên quan: TC-001, TC-008
 - Role: Employee
+- Status: Ready
 - Preconditions: Employee đăng nhập; có dữ liệu chuyến đi hợp lệ với ngày đi cách ít nhất 3 ngày làm việc.
 Scenario: Nhân viên tạo yêu cầu, bỏ qua AI và gửi duyệt
 
@@ -263,9 +264,7 @@ And Employee không tải được PDF của Trip thuộc người khác hoặc 
 | E2E-11 | Tải PDF theo quyền sở hữu, role và trạng thái Trip | US-10 | TC-046, TC-047, TC-048, TC-049 | Employee, Finance | BLOCKED |
 
 ## Open QA Questions
-
-1. **Lưu nháp và validation (TC-002, TC-003):** Test Case kỳ vọng chặn lưu khi thiếu trường bắt buộc hoặc ngày về trước ngày đi; cần xác nhận hành vi mong muốn so với form hiện tại trước khi scenario E2E-01 có thể chạy như viết.
-2. **Guardrail AI của US-02:** Tiêu đề AC 2.2 nói về chặn lịch trình AI vượt ngân sách; nội dung/flow hiện tại và TC-008 nói người dùng có thể bỏ qua AI bằng “Tiếp tục”. Cần xác nhận behavior AI vượt ngân sách nằm trong phạm vi scenario nào.
-3. **Nhãn trạng thái re-approval (US-07, AC 7.5):** Tài liệu dùng `PENDING_MANAGER_APPROVAL`, trong khi implementation dùng `MANAGER_REAPPROVE` và hiển thị nhãn frontend khác. Cần thống nhất trạng thái/nhãn quan sát được trước khi xác nhận expected UI.
+.
+ **Nhãn trạng thái re-approval (US-07, AC 7.5):** Tài liệu dùng `PENDING_MANAGER_APPROVAL`, trong khi implementation dùng `MANAGER_REAPPROVE` và hiển thị nhãn frontend khác. Cần thống nhất trạng thái/nhãn quan sát được trước khi xác nhận expected UI.
 
 QA-Q-05 (PDF) và QA-Q-06 (Notification) vẫn PENDING VERIFICATION trong `qa-verification.md`; các scenario E2E-10 và E2E-11 chưa được xem là PASS/READY khi chưa có execution evidence.
