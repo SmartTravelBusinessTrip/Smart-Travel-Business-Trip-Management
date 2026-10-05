@@ -37,7 +37,7 @@
     *Given* Trip Request đã có thông tin Điểm đến, Số ngày công tác và Tổng ngân sách  
     *When* Employee nhấn nút "Tạo lịch trình bằng AI"  
     *Then* Hệ thống gửi payload `{tripId, destination, days, budget, preferences?}` sang AI Service (đính kèm `tripId` để AI Service xác nhận đúng Trip Request đang xử lý) và hiển thị danh sách hoạt động phân bổ theo từng ngày (buổi sáng, buổi chiều, buổi tối, gợi ý khách sạn) với tổng chi phí ước tính ≤ tổng ngân sách ban đầu (tuân thủ `BR-TR-07`).
-  - **AC 2.2 (Guardrail chặn AI vượt ngân sách):**  
+  - **AC 2.2 (Có thể bỏ qua mà không sự dụng AI):**  
     *Given* Trip Request đã có thông tin hợp lệ 
     *When* Employee nhấn “Tiếp tục” mà không sử dụng AI
     *Then* Hệ thống chuyển sang bước tiếp theo thành công và không yêu cầu sinh lịch trình bằng AI.

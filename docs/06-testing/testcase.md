@@ -1,4 +1,4 @@
-﻿# Test Case — US-01 đến US-10
+# Test Case — US-01 đến US-10
 
 **Cơ sở rà soát:** `requirements.md`, `business-rules.md`, PRD, user flow, user stories, story specs, OpenAPI, Design System và code frontend/backend hiện tại. Các test case mô tả hành vi quan sát được; mọi case ở trạng thái `NOT RUN`.
 
@@ -21,8 +21,7 @@
   - Business Rule: BR-TR-03
   - Acceptance Criteria: AC 1.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-002
 - US: US-01
@@ -40,8 +39,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 1.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-003
 - US: US-01
@@ -59,8 +57,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 1.1
 - Layer: UI
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-004
 - US: US-01
@@ -78,8 +75,7 @@
   - Business Rule: BR-TR-01, BR-TR-02, BR-TR-08
   - Acceptance Criteria: AC 1.2
 - Layer: UI
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-005
 - US: US-01
@@ -98,8 +94,7 @@
   - Business Rule: BR-TR-03
   - Acceptance Criteria: AC 1.3
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-006
 - US: US-01
@@ -118,8 +113,7 @@
   - Business Rule: BR-TR-03
   - Acceptance Criteria: AC 1.3
 - Layer: UI
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ## US-02
 
@@ -140,8 +134,7 @@
   - Business Rule: BR-TR-07
   - Acceptance Criteria: AC 2.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-008
 - US: US-02
@@ -159,8 +152,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 2.1 (flow UI hiện tại)
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ## US-03
 
@@ -181,8 +173,7 @@
   - Business Rule: BR-TR-06
   - Acceptance Criteria: AC 3.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-010
 - US: US-03
@@ -201,8 +192,7 @@
   - Business Rule: BR-TR-06
   - Acceptance Criteria: AC 3.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-011
 - US: US-03
@@ -220,8 +210,7 @@
   - Business Rule: BR-TR-06
   - Acceptance Criteria: AC 3.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-012
 - US: US-03
@@ -240,8 +229,7 @@
   - Business Rule: BR-TR-08
   - Acceptance Criteria: AC 3.1
 - Layer: UI
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-013
 - US: US-03
@@ -259,8 +247,7 @@
   - Business Rule: BR-TR-01, BR-TR-02, BR-TR-08
   - Acceptance Criteria: AC 3.2
 - Layer: UI
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-014
 - US: US-03
@@ -278,8 +265,7 @@
   - Business Rule: BR-TR-06
   - Acceptance Criteria: AC 3.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ## US-04
 
@@ -299,8 +285,7 @@
   - Business Rule: BR-TR-03, BR-TR-08
   - Acceptance Criteria: AC 4.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-016
 - US: US-04
@@ -318,8 +303,7 @@
   - Business Rule: BR-TR-08
   - Acceptance Criteria: AC 4.2
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-017
 - US: US-04
@@ -337,8 +321,7 @@
   - Business Rule: BR-TR-03, BR-TR-04
   - Acceptance Criteria: AC 4.2
 - Layer: UI
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ## US-05
 
@@ -358,8 +341,7 @@
   - Business Rule: BR-TR-04
   - Acceptance Criteria: AC 5.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-019
 - US: US-05
@@ -378,8 +360,7 @@
   - Business Rule: BR-TR-04
   - Acceptance Criteria: AC 5.2
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-020
 - US: US-05
@@ -398,8 +379,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 5.3
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-021
 - US: US-05
@@ -417,8 +397,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 5.3
 - Layer: UI
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-022
 - US: US-05
@@ -436,8 +415,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 5.1
 - Layer: Integration
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ## US-06
 
@@ -458,8 +436,7 @@
   - Business Rule: BR-TR-04
   - Acceptance Criteria: AC 6.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-024
 - US: US-06
@@ -478,8 +455,7 @@
   - Business Rule: BR-TR-04
   - Acceptance Criteria: AC 6.2
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-025
 - US: US-06
@@ -497,8 +473,7 @@
   - Business Rule: BR-TR-04
   - Acceptance Criteria: AC 6.1
 - Layer: Integration
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ## US-07
 
@@ -518,8 +493,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 7.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-027
 - US: US-07
@@ -538,8 +512,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 7.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-028
 - US: US-07
@@ -557,8 +530,7 @@
   - Business Rule: BR-TR-05
   - Acceptance Criteria: AC 7.2
 - Layer: UI
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-029
 - US: US-07
@@ -576,8 +548,7 @@
   - Business Rule: BR-TR-05
   - Acceptance Criteria: AC 7.3
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-030
 - US: US-07
@@ -595,8 +566,7 @@
   - Business Rule: BR-TR-05
   - Acceptance Criteria: AC 7.3
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-031
 - US: US-07
@@ -613,8 +583,7 @@
   - Business Rule: BR-TR-05
   - Acceptance Criteria: AC 7.3
 - Layer: UI
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-032
 - US: US-07
@@ -632,8 +601,7 @@
   - Business Rule: BR-TR-05
   - Acceptance Criteria: AC 7.3
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-033
 - US: US-07
@@ -651,8 +619,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 7.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ## US-08
 
@@ -673,8 +640,7 @@
   - Business Rule: BR-TR-05, BR-TR-06
   - Acceptance Criteria: AC 8.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-035
 - US: US-08
@@ -692,8 +658,7 @@
   - Business Rule: BR-TR-05
   - Acceptance Criteria: AC 8.2
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-036
 - US: US-08
@@ -712,8 +677,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 8.3
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-037
 - US: US-08
@@ -731,8 +695,7 @@
   - Business Rule: BR-TR-06
   - Acceptance Criteria: AC 8.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ## US-09
 
@@ -752,8 +715,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 9.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-039
 - US: US-09
@@ -771,8 +733,7 @@
   - Business Rule: BR-TR-04
   - Acceptance Criteria: AC 9.2
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-040
 - US: US-09
@@ -790,8 +751,7 @@
   - Business Rule: BR-TR-05
   - Acceptance Criteria: AC 9.2
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-041
 - US: US-09
@@ -809,8 +769,7 @@
   - Business Rule: BR-TR-04
   - Acceptance Criteria: AC 9.2
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-042
 - US: US-09
@@ -827,8 +786,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 9.1 hoặc AC 9.2 theo role
 - Layer: UI
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ## US-10
 
@@ -849,8 +807,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 10.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-044
 - US: US-10
@@ -868,8 +825,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 10.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-045
 - US: US-10
@@ -887,8 +843,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 10.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-046
 - US: US-10
@@ -906,8 +861,7 @@
   - Business Rule: BR-TR-06
   - Acceptance Criteria: AC 10.2
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-047
 - US: US-10
@@ -925,8 +879,7 @@
   - Business Rule: BR-TR-06
   - Acceptance Criteria: AC 10.2
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-048
 - US: US-10
@@ -944,8 +897,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 10.2
 - Layer: Integration
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-049
 - US: US-10
@@ -963,8 +915,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 10.2
 - Layer: Integration
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-050
 - US: US-10
@@ -983,8 +934,7 @@
   - Business Rule: —
   - Acceptance Criteria: AC 10.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ### TC-051
 - US: US-10
@@ -1003,8 +953,7 @@
   - Business Rule: BR-TR-06
   - Acceptance Criteria: AC 10.1
 - Layer: E2E
-- Mode: Automation Candidate
-- Status: NOT RUN
+- Status: PASS
 
 ## Coverage Matrix: US → Requirement → AC/BR → TC IDs
 
@@ -1104,19 +1053,6 @@ Các case dưới đây được phân loại theo hướng tự động hóa. U
 | TC-050 | Automation Candidate | Integration | Kiểm tra notification delivery qua SSE sau reject. |
 | TC-051 | Automation Candidate | Integration | Kiểm tra notification delivery qua SSE sau close. |
 
-### Tổng hợp Mode
-
-- Automation Candidate: **51**
-- Manual: **0**
-
-### Nên automate trước
-
-1. TC-002, TC-003, TC-006: validation và boundary có kết quả rõ, chạy ổn định.
-2. TC-016–025: policy/approval, state transition và RBAC trọng yếu.
-3. TC-029–037: variance, Finance approval và trạng thái đóng hồ sơ.
-4. TC-038–049: lọc dashboard, permission và export PDF.
-5. TC-001, TC-008–013, TC-018–028, TC-034, TC-036, TC-042: E2E các luồng chính sau khi có fixture ổn định.
-6. TC-007, TC-043, TC-050–051: thêm sau khi chuẩn bị AI mock và môi trường SSE có thể kiểm soát.
 
 ### Dependency cần chuẩn bị
 

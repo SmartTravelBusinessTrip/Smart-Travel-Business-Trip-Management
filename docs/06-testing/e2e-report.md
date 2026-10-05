@@ -1,54 +1,61 @@
 # E2E Automation Demo Report
 
-## E2E ID
+## Lần chạy mới nhất — E2E-01 business flow (2026-10-05)
 
-E2E-04 — Manager xử lý yêu cầu trong phạm vi quản lý (chỉ nhánh duyệt một cấp).
+### E2E ID
 
-## Scenario
+E2E-01 — Nhân viên tạo yêu cầu, bỏ qua AI và gửi duyệt.
 
-Manager đăng nhập, mở yêu cầu `SUBMITTED` của direct report không cần Level 2, phê duyệt cấp 1 và xác minh Trip chuyển `Approved`.
+### Scenario
 
-## User Story
+Employee tạo Trip hợp lệ, lưu Draft, mở lại, bỏ qua AI bằng “Tiếp tục”, rồi gửi duyệt.
 
-US-05
+### User Story
 
-## Test Case liên quan
+US-01, US-02, US-04.
 
-TC-018 — Manager duyệt yêu cầu một cấp.
+### Test Case liên quan
 
-## Steps đã automation
+TC-001, TC-008.
 
-1. Đăng nhập bằng account Manager lấy từ environment variables.
-2. Mở hàng chờ duyệt cấp 1.
-3. Chọn Trip theo `E2E_MANAGER_TRIP_CODE`; kiểm tra đang chờ duyệt cấp 1 và không có dấu hiệu yêu cầu Level 2.
-4. Chọn “Phê duyệt cấp 1”.
-5. Mở danh sách đã xử lý và xác minh Trip hiển thị `Đã duyệt`.
+### Steps đã automation
 
-## Expected Result
+1. Đăng nhập bằng account Employee lấy từ environment variables.
+2. Tạo Trip với dữ liệu hợp lệ và chọn “Lưu nháp”.
+3. Mở lại Draft từ dashboard.
+4. Chọn “Tiếp tục” qua bước lịch trình mà không bấm “Sinh lịch trình bằng AI”.
+5. Chọn “Tiếp tục” sang bước xem lại và bấm “Gửi yêu cầu duyệt”.
+6. Xác minh kết quả gửi duyệt trên response API và trạng thái Trip ở dashboard.
 
-Trip `SUBMITTED` của nhân viên trực tiếp, không cần Level 2, được Manager phê duyệt và chuyển `Approved`.
+### Expected Result
 
-## Actual Result
+Trip được lưu ở trạng thái Draft; có thể bỏ qua bước AI; sau gửi, yêu cầu chuyển sang trạng thái đã gửi duyệt.
 
-Lần chạy cuối tải được trang, đăng nhập Manager và xác minh dashboard “Phê duyệt yêu cầu cấp 1”. Test dừng trước khi mở/duyệt Trip vì chưa cấu hình `E2E_MANAGER_TRIP_CODE`; không có dữ liệu nghiệp vụ nào được thay đổi. Hai lần chạy trước gặp timeout tải trang/đăng nhập; tăng thời gian chờ và đổi sang chờ `domcontentloaded` giúp lần chạy cuối đi tới bước kiểm tra fixture.
+### Actual Result
 
-## Status
+Playwright hoàn tất toàn bộ flow. Trip được tạo và hiển thị ban đầu là “Bản nháp”; sau khi mở lại, nút “Tiếp tục” chuyển qua bước lịch trình mà không gọi AI; submit trả về `SUBMITTED`, trang xác nhận “Đã gửi yêu cầu duyệt” và dashboard hiển thị “Chờ duyệt cấp 1”. Kết quả cuối: **1 passed, 0 failed, 0 skipped**.
 
-**BLOCKED** — thiếu mã Trip test cụ thể; môi trường Railway chưa được xác nhận là deployment cô lập có thể ghi dữ liệu demo.
+### Status
 
-## Evidence
+**PASS** — Bản scenario hiện tại chỉ tham chiếu TC-001 và TC-008; hành vi lưu Draft, bỏ qua AI và gửi duyệt đã được kiểm tra end to end. Một locator ambiguity và việc chờ form tải Draft đã được sửa trong test code trước lần chạy PASS; production code không thay đổi. Trip đã gửi được giữ trong test environment để reset; ứng dụng chỉ cho xóa Trip khi còn Draft.
 
-- HTML report: `playwright-report/index.html` (lần chạy cuối, 1 test skipped).
-- Ảnh chụp và trace được bật khi test fail trong `playwright.config.ts`. Lần chạy cuối bị skip theo điều kiện thiếu fixture nên không tạo screenshot/trace; không có PASS evidence.
-- Test spec: `tests/e2e/e2e-004-manager-approve.spec.ts`.
+### Evidence
 
-## Thời gian chạy
+- Spec: `tests/e2e/e2e-01-employee-skip-ai-submit.spec.ts`
+- Lệnh chạy: `npm.cmd run test:e2e -- tests/e2e/e2e-01-employee-skip-ai-submit.spec.ts`
+- HTML report: `playwright-report/index.html`
+- Test attachment chứa mã Trip, ID và trạng thái cuối.
+- Screenshot/trace/video chỉ được giữ khi fail theo cấu hình; lần PASS không tạo screenshot/trace.
 
-2026-10-01 11:43 (+07:00), lần chạy cuối khoảng 15 giây. Hai lần chạy trước trong cùng phiên không hoàn tất do timeout môi trường.
+### Thời gian chạy
 
-## Cần chuẩn bị để chạy demo hoàn chỉnh
+2026-10-05 10:02 (+07:00), test runtime 9 giây (Playwright tổng kết khoảng 11.5 giây).
 
-- **DevOps:** xác nhận URL Railway là môi trường test cô lập; backend/API và database hoạt động, cho phép dùng fixture mà không ảnh hưởng dữ liệu thật.
-- **Dev/QA:** tạo một Trip test `SUBMITTED` của direct report, không cần Level 2, có mã nhận diện duy nhất; giữ Trip chưa được xử lý cho tới khi chạy demo.
-- **QA:** đặt mã đó vào `E2E_MANAGER_TRIP_CODE` trong `.env.e2e.local`, xác minh account Manager đăng nhập được và fixture xuất hiện đúng hàng chờ.
-- Chạy lại: `npm.cmd run test:e2e -- tests/e2e/e2e-004-manager-approve.spec.ts`.
+### Dữ liệu test và lần chạy đầu
+
+- QA/DevOps đã xác nhận URL là môi trường test biệt lập và cho phép dọn/reset dữ liệu. Trip được gửi duyệt nên không thể xóa bằng thao tác xóa Draft thông thường; cần reset/dọn Trip test sau demo. Mã và ID cụ thể có trong attachment của HTML report.
+- Lần chạy đầu dừng ở locator strict-mode; lần tiếp theo bấm “Tiếp tục” trước khi dữ liệu Draft tải xong. Hai lỗi được sửa trong test code; lần chạy cuối PASS.
+
+---
+
+

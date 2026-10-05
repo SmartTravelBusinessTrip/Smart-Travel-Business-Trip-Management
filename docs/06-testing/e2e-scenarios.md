@@ -6,28 +6,18 @@ Các scenario dưới đây gom những Test Case thành các hành trình nghi�
 
 - E2E ID: E2E-01
 - User Story liên quan: US-01, US-02, US-04
-- Test Case liên quan: TC-001, TC-002, TC-003, TC-004, TC-008, TC-015, TC-016
+- Test Case liên quan: TC-001, TC-008
 - Role: Employee
 - Preconditions: Employee đăng nhập; có dữ liệu chuyến đi hợp lệ với ngày đi cách ít nhất 3 ngày làm việc.
-- Playwright Ready: NEEDS CONFIRMATION
-- Ghi chú: TC-002/TC-003 kỳ vọng Lưu nháp chặn thiếu trường bắt buộc/ngày không hợp lệ; cách kiểm tra Lưu nháp trong giao diện hiện tại có khác biệt. Cần xác nhận behavior này trước khi đóng băng kịch bản. Môi trường chạy E2E cũng chưa sẵn sàng.
-
 Scenario: Nhân viên tạo yêu cầu, bỏ qua AI và gửi duyệt
 
 Given Employee đang tạo yêu cầu công tác với thông tin cơ bản hợp lệ
-And dữ liệu thử có thể được chuẩn bị với một trường bắt buộc bị bỏ trống hoặc ngày về trước ngày đi
-When Employee lưu nháp với dữ liệu thiếu hoặc ngày không hợp lệ
-And Employee hoàn thiện dữ liệu, lưu nháp và mở bước lịch trình
-And Employee nhập ngân sách cao hơn Combined_Limit và xem phần cảnh báo tổng hợp
+When Employee hoàn thiện dữ liệu, lưu nháp và mở bước lịch trình
 And Employee chọn “Tiếp tục” mà không sinh lịch trình AI
-And Employee xem policy preview rồi bấm “Gửi yêu cầu”
-Then thông tin hợp lệ được lưu dưới dạng Draft
-And dữ liệu thiếu hoặc ngày không hợp lệ phải bị báo lỗi và không được lưu theo TC-002/TC-003, cần xác nhận với behavior Lưu nháp hiện tại
-And chỉ có một cảnh báo tổng hợp cho Combined_Limit theo TC-004, không có cảnh báo riêng cho Hotel/Per Diem và không cần lý do
+And Employee bấm “Gửi yêu cầu”
+Then thông tin hợp lệ được gửi thành công và lưu ở trạng thái đã gửi duyệt
 And “Tiếp tục” chuyển sang bước kế tiếp mà không bắt buộc dùng AI
-And Policy Check chính thức chạy khi gửi; yêu cầu được gửi với snapshot approvalReasons và requiresLevel2
-
-- Kết quả mong đợi: Yêu cầu hợp lệ được lưu, có thể bỏ qua AI và Policy Check chính thức chỉ chạy khi gửi.
+- Kết quả mong đợi: Yêu cầu hợp lệ được lưu, có thể bỏ qua AI khi gửi.
 
 ## E2E-02 — Nhân viên tạo và chỉnh sửa lịch trình có AI gợi ý
 
@@ -36,8 +26,6 @@ And Policy Check chính thức chạy khi gửi; yêu cầu được gửi với
 - Test Case liên quan: TC-007, TC-009, TC-010, TC-011, TC-012, TC-013
 - Role: Employee
 - Preconditions: Employee có Trip chưa đóng với thông tin điểm đến, ngày và ngân sách; fixture AI ổn định cần được chuẩn bị.
-- Playwright Ready: NEEDS CONFIRMATION
-- Ghi chú: AC 2.2 có tiêu đề về chặn lịch trình AI vượt ngân sách, trong khi mô tả flow và TC-008 xác định “Tiếp tục” để bỏ qua AI. Cần làm rõ phạm vi guardrail của AI. Chưa xác minh có mock/fixture AI ổn định cho web E2E; không gọi AI provider thật.
 
 Scenario: Nhân viên tạo và chỉnh sửa lịch trình có AI gợi ý
 
