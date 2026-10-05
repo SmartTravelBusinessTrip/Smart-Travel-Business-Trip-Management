@@ -16,7 +16,25 @@ import { authGuard } from '../../src/backend/src/middlewares/auth.guard';
 import { AppError } from '../../src/backend/src/middlewares/error-handler';
 
 // ─── Mock jsonwebtoken ─────────────────────────────────────────────────────────
-vi.mock('jsonwebtoken');
+// Dùng factory để giữ lại class thật (TokenExpiredError, JsonWebTokenError)
+// vì implementation truy cập qua default import: jwt.TokenExpiredError, jwt.JsonWebTokenError.
+// Spread `...actual` không đủ vì class properties trên CJS module là non-enumerable.
+// Phải assign trực tiếp từng class cần dùng trong instanceof check.
+vi.mock('jsonwebtoken', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('jsonwebtoken')>();
+  return {
+    ...actual,
+    default: {
+      verify: vi.fn(),
+      // Giữ nguyên các error class để instanceof hoạt động đúng
+      TokenExpiredError:  actual.TokenExpiredError,
+      JsonWebTokenError:  actual.JsonWebTokenError,
+      NotBeforeError:     actual.NotBeforeError,
+      sign:               actual.sign,
+      decode:             actual.decode,
+    },
+  };
+});
 
 // ─── Mock Express Request/Response/NextFunction ───────────────────────────────
 

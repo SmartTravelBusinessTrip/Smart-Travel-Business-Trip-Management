@@ -26,8 +26,10 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:prod": "prisma migrate deploy",
     "db:seed": "tsx src/prisma/seed.ts",
+    "db:seed:e2e": "tsx src/prisma/seed.e2e.ts",
     "db:setup": "prisma migrate dev --skip-seed; tsx src/prisma/seed.ts",
     "db:reset": "prisma migrate reset --force; tsx src/prisma/seed.ts",
+    "db:reset:e2e": "prisma migrate reset --force && tsx src/prisma/seed.ts && tsx src/prisma/seed.e2e.ts",
     "db:validate": "prisma validate",
     "db:studio": "prisma studio"
   },
