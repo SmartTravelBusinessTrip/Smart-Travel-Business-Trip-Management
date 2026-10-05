@@ -22,10 +22,15 @@ import { AppError } from '../../src/backend/src/middlewares/error-handler';
 // Phải assign trực tiếp từng class cần dùng trong instanceof check.
 vi.mock('jsonwebtoken', async (importOriginal) => {
   const actual = await importOriginal<typeof import('jsonwebtoken')>();
+  const verify = vi.fn();
+  const actualDefault = actual.default as typeof actual;
+
   return {
     ...actual,
+    verify,
     default: {
-      verify: vi.fn(),
+      ...actualDefault,
+      verify,
       // Giữ nguyên các error class để instanceof hoạt động đúng
       TokenExpiredError:  actual.TokenExpiredError,
       JsonWebTokenError:  actual.JsonWebTokenError,
