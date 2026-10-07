@@ -76,6 +76,59 @@ Kết quả Unit/API dưới đây được giữ từ lần chạy trước; In
 
 Unit gồm 117 assertions/tests (70 backend, 47 frontend); Integration latest run có 29 PASS và 9 FAIL; API có 22 tests PASS.
 
+### Chi tiết 9 integration test failures — 2026-10-07
+
+#### `tests/integration/itinerary.apply.test.ts` — 4 failures
+
+1. **accepts batch and existing single-item payloads on the same POST endpoint**
+   - Expected audit log count: `1`.
+   - Actual audit log count: `0`.
+
+2. **keeps manual additions false and preserves read/update/delete**
+   - Expected itinerary operation to find the trip.
+   - Actual error: `TRIP_NOT_FOUND`.
+
+3. **flags every AI item and counts only the actual AI batch, excluding existing/manual items**
+   - Expected the existing trip and itinerary items to be available.
+   - Actual error: `TRIP_NOT_FOUND`.
+
+4. **rolls back on a database insert failure without a success audit**
+   - Expected audit log count after rollback: `0`.
+   - Actual audit log count: `1`.
+
+#### `tests/integration/concurrency.test.ts` — 5 failures
+
+5. **two manager decisions: approve versus approve**
+   - Expected status codes: `[200, 409]`.
+   - Actual status codes: `[200, 500]`.
+   - Related error: `Transaction API error: Transaction not found`.
+
+6. **expense item racing submit leaves an internally consistent variance snapshot**
+   - Expected submit response: `200`.
+   - Actual response: `500`.
+   - Related error: transaction became unavailable while creating a notification.
+
+7. **close racing itinerary mutation permits only writes serialized before close**
+   - Expected itinerary mutation response: `200`.
+   - Actual response: `500`.
+   - Related error: `Transaction API error: Transaction not found` while creating a notification.
+
+8. **concurrent trip creation allocates unique codes, including after deletion**
+   - Expected status codes: `[201, 201]`.
+   - Actual status codes: `[201, 500]`.
+   - Related error: `Transaction API error: Transaction not found`.
+
+9. **expense item update versus delete keeps the header sum exact**
+   - Expected status codes: `[200, 204]`.
+   - Actual status codes: `[500, 204]`.
+
+#### Failure pattern
+
+- Several concurrency failures return HTTP `500` where the test expects a business conflict (`409`) or a successful serialized mutation (`200`/`201`).
+- Repeated stack traces point to interactive Prisma transactions in `mutation.service.ts` and transaction-scoped writes in `notification.service.ts` and `audit.service.ts`.
+- The FIX-06 failures also indicate test data/audit isolation problems: missing trip records and audit rows remaining after a rollback.
+- These are genuine test failures after successful database connection; they are not environment `BLOCKED` results.
+
 ## Môi trường và giới hạn
 
 - Integration latest run dùng Railway `testing` database; connection và migration thành công. 9 assertion/test failures còn lại là lỗi application transaction/concurrency hoặc test-fixture isolation, không phải BLOCKED môi trường.
