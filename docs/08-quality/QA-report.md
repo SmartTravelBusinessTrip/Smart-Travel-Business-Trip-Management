@@ -1,6 +1,19 @@
 # Test Execution Report
 
-**Cập nhật:** 2026-10-05
+## Integration test execution log — 2026-10-07 (latest run)
+
+- **Command:** `npm.cmd --prefix src/backend run test:integration`
+- **Database:** Railway `testing` database; connection succeeded and test fixtures were created.
+- **Suites:** `tests/integration/itinerary.apply.test.ts`, `tests/integration/concurrency.test.ts`
+- **Result:** 38 tests executed; **29 passed, 9 failed**; 0 skipped.
+- **Test files:** 2 failed.
+- **Status:** **FAIL** — this run reached application assertions; it is no longer BLOCKED by database connectivity.
+- **Main failures:** 4 FIX-06 itinerary-apply tests and 5 FIX-08 concurrency tests.
+- **Observed errors:** `Transaction API error: Transaction not found` leading to HTTP 500 responses where tests expected 200/201/409; FIX-06 also showed missing trip/audit records and unexpected audit count.
+- **Affected code areas in stack traces:** `mutation.service.ts`, `notification.service.ts`, `audit.service.ts`, `trip.service.ts`, `expense.service.ts`, and `itinerary.service.ts`.
+- **Conclusion:** Database setup/migration is working. The remaining failures are application transaction/concurrency or test-fixture isolation issues and require investigation; they must not be recorded as BLOCKED.
+
+**Cập nhật:** 2026-10-07
 
 **Nguồn business Test Case:** `docs/06-testing/testcase.md` (51 TC)
 **Phân biệt kết quả:** PASS manual và PASS automated được báo riêng; kết quả của test tầng thấp không tự động quy đổi thành PASS cho business TC.
@@ -10,10 +23,10 @@
 | Phạm vi | Total | PASS | FAIL | BLOCKED | Ghi chú |
 | --- | ---: | ---: | ---: | ---: | --- |
 | Unit automation | 117 | 117 | 0 | 0 | Chạy 2026-10-01; backend và frontend |
-| Integration automation | 38 | 0 | 0 | 38 | PostgreSQL test DB tại `localhost:5432` không khả dụng trong lần chạy 2026-10-01 |
+| Integration automation | 38 | 29 | 9 | 0 | Latest run 2026-10-07 trên Railway `testing`; DB kết nối thành công |
 | API automation | 22 | 22 | 0 | 0 | Chạy 2026-10-01; Supertest, mock Prisma/service |
 | E2E automation | 1 | 1 | 0 | 0 | E2E-01 chạy 2026-10-05; cover TC-001 và TC-008 |
-| **Tổng automated execution** | **178** | **140** | **0** | **38** | Unit + Integration + API + E2E |
+| **Tổng automated execution** | **178** | **169** | **9** | **0** | Unit + Integration + API + E2E; chưa tính các lần chạy cũ |
 
 ## Manual Business Test Case Coverage
 
@@ -45,7 +58,7 @@ Theo xác nhận của QA, toàn bộ **51/51 TC** trong `testcase.md` đã đư
 
 ## Unit, Integration và API execution
 
-Kết quả dưới đây được giữ từ lần chạy 2026-10-01; các suite này chưa được chạy lại trong lần cập nhật report này.
+Kết quả Unit/API dưới đây được giữ từ lần chạy trước; Integration đã được cập nhật theo execution log ngày 2026-10-07.
 
 | Test file | Layer | Status | Kết quả |
 | --- | --- | --- | --- |
@@ -57,15 +70,15 @@ Kết quả dưới đây được giữ từ lần chạy 2026-10-01; các suit
 | `tests/unit/frontend/LoginForm.test.tsx` | Unit | PASS | Frontend component test |
 | `tests/unit/frontend/PolicyBanner.test.tsx` | Unit | PASS | Frontend component test |
 | `tests/unit/frontend/TripRequestForm.test.tsx` | Unit | PASS | Frontend component test |
-| `tests/integration/itinerary.apply.test.ts` | Integration | BLOCKED | Không kết nối được PostgreSQL test DB tại `localhost:5432` |
-| `tests/integration/concurrency.test.ts` | Integration | BLOCKED | Không kết nối được PostgreSQL test DB tại `localhost:5432` |
+| `tests/integration/itinerary.apply.test.ts` | Integration | FAIL | 3/7 PASS, 4/7 FAIL; lỗi fixture/audit/trip và transaction behavior |
+| `tests/integration/concurrency.test.ts` | Integration | FAIL | 26/31 PASS, 5/31 FAIL; lỗi `Transaction API error: Transaction not found` và HTTP 500 |
 | `tests/api/trips.api.test.ts` | API | PASS | Supertest; kiểm tra response, validation, auth, role và state; mock Prisma/service |
 
-Unit gồm 117 assertions/tests (70 backend, 47 frontend); Integration có 38 tests bị block bởi suite setup; API có 22 tests PASS. Không có assertion nào FAIL trong lần chạy đó.
+Unit gồm 117 assertions/tests (70 backend, 47 frontend); Integration latest run có 29 PASS và 9 FAIL; API có 22 tests PASS.
 
 ## Môi trường và giới hạn
 
-- Integration dùng test database `smart_travel_test` tại `localhost:5432`; PostgreSQL không nhận kết nối trong lần chạy được ghi nhận.
+- Integration latest run dùng Railway `testing` database; connection và migration thành công. 9 assertion/test failures còn lại là lỗi application transaction/concurrency hoặc test-fixture isolation, không phải BLOCKED môi trường.
 - Không chạy seed/reset và không kết nối database production.
 - Test data E2E-01 thuộc deployed test environment biệt lập; cần reset Trip đã gửi duyệt sau demo.
 - 51 status manual PASS phản ánh xác nhận của QA trong `testcase.md`; báo cáo không có bộ evidence manual theo từng TC.
@@ -79,4 +92,4 @@ npm.cmd --prefix src/backend run test:api
 npm.cmd run test:e2e -- tests/e2e/e2e-01-employee-skip-ai-submit.spec.ts
 ```
 
-Để Integration chạy được, cần khởi động PostgreSQL riêng cho test, tạo/migrate database `smart_travel_test`, rồi chạy suite. Không trỏ test tới database phát triển hoặc production.
+Integration latest run đã kết nối được Railway database trong environment `testing` và đã áp dụng migration. Khi chạy lại, dùng database test cô lập tương tự hoặc PostgreSQL local riêng; không trỏ test tới database phát triển hoặc production.
