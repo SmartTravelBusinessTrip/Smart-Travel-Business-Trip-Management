@@ -1,240 +1,185 @@
 # Smart Travel & Business Trip Management
 
-Hệ thống quản lý xin đi công tác, phê duyệt và chi phí công tác cho doanh nghiệp, có tích hợp tính năng AI sinh itinerary theo constraint và tự động kiểm tra tuân thủ policy.
+Dự án web quản lý xin đi công tác, phê duyệt, lịch trình, chi phí và báo cáo trong doanh nghiệp. Ứng dụng mô phỏng quy trình từ khi nhân viên tạo trip request đến khi finance đóng hồ sơ và xuất báo cáo.
 
-**Nhóm 11 - MIS3032_1**
+Nhóm 08 — MIS3032_1
 
-## Business Workflow
+## Tóm tắt chức năng
 
-```
-Trip Request → Approval → Itinerary → Trip → Expense → Close
-```
+- Employee tạo Trip Request, cập nhật itinerary và nộp expense claim.
+- Manager phê duyệt/từ chối ở cấp 1; Travel Admin xử lý cấp 2 nếu cần.
+- Hệ thống kiểm tra policy, cảnh báo vi phạm và định tuyến theo quyền.
+- AI sinh nháp itinerary theo điểm đến, ngày đi, ngân sách và ràng buộc.
+- Dashboard theo vai trò, thông báo nội bộ và export PDF.
 
-- **Employee**: tạo Trip Request, xem trạng thái, ghi nhận Expense sau chuyến đi.
-- **Manager**: phê duyệt/từ chối Trip Request.
-- **Travel Admin**: xử lý Itinerary, kiểm tra tuân thủ policy công tác.
-- **Finance**: đối chiếu và đóng (Close) request sau khi có Expense.
+## Kiến trúc
 
-## Tính năng AI
+- Frontend: React + Vite + TypeScript
+- Backend: Express + TypeScript + Prisma
+- Database: PostgreSQL
+- Auth: JWT access/refresh token
+- AI: Groq SDK, model `openai/gpt-oss-20b`
 
-Hệ thống tích hợp AI để:
-1. Tự động sinh Itinerary nháp theo constraint (ngân sách, ngày đi/về, điểm đến).
-2. Tự động kiểm tra Trip Request có vi phạm Policy công tác hay không, và phát hiện thông tin còn thiếu trước khi trình duyệt.
+## Cấu trúc repo chính
 
-## Cấu trúc thư mục
-
-> Cây thư mục dưới đây liệt kê đúng file thật đang có trong repo (không phải mô tả rút gọn). Các mục còn để `.gitkeep` nghĩa là thư mục đã tạo sẵn nhưng **chưa có artifact/code thật** (sẽ triển khai ở tuần code/testing/release theo kế hoạch môn học).
-
-```
-Smart Travel & Business Trip Management/
-├─ README.md                          (file này)
-├─ .env.example                       (mẫu biến môi trường)
-│
-├─ docs/                              (toàn bộ artifact chính thức để chấm điểm)
-│  ├─ 00-project-index.md             (mục lục — mở artifact trong 60 giây)
-│  ├─ team-roles.md                   (phân vai 5 thành viên)
-│  ├─ TRACEABILITY.md                 (ma trận REQ → Story → Design/API → Task)
-│  │
+```text
+Smart-Travel-Business-Trip-Management/
+├─ README.md
+├─ .env.example
+├─ .env.e2e.example
+├─ package.json
+├─ playwright.config.ts
+├─ .github/
+│  └─ workflows/ci.yml
+├─ docs/
+│  ├─ 00-project-index.md
+│  ├─ TRACEABILITY.md
+│  ├─ team-roles.md
 │  ├─ 01-discovery/
-│  │  ├─ project-charter.md
-│  │  ├─ user-research.md
-│  │  └─ persona-jtbd.md
-│  │
-│  ├─ 02-vault/                       (Project Vault - single source of truth để người & AI tra cứu)
-│  │  ├─ 00-index.md
-│  │  ├─ source-priority.md
-│  │  ├─ vault-qa-benchmark.md
-│  │  ├─ 01-sources/
-│  │  │  └─ interview-notes.md        (ghi chú phỏng vấn gốc)
-│  │  ├─ 02-requirements/
-│  │  │  ├─ requirements.md           (REQ-TR-01 … REQ-TR-12)
-│  │  │  ├─ scope.md
-│  │  │  └─ open-questions.md
-│  │  ├─ 03-domain/
-│  │  │  ├─ business-rules.md
-│  │  │  ├─ glossary.md
-│  │  │  └─ workflows.md
-│  │  └─ 08-decisions/
-│  │     └─ decision-log.md
-│  │
+│  ├─ 02-vault/
 │  ├─ 03-product/
-│  │  ├─ PRD.md
-│  │  ├─ user-flow.mmd
-│  │  ├─ user-stories.md              (US-01 … US-10)
-│  │  └─ taiga-backlog.md
-│  │
 │  ├─ 04-design/
-│  │  ├─ design-system.md
-│  │  ├─ prototype-link.md
-│  │  └─ usability-test.md
-│  │
 │  ├─ 05-technical/
-│  │  ├─ architecture.md
-│  │  ├─ data-model.md
-│  │  ├─ API.md
-│  │  ├─ openapi.yaml
-│  │  ├─ ERD.svg
-│  │  ├─ adr/                         (chưa có ADR nào được ghi — .gitkeep)
-│  │  ├─ ai/                          (đặc tả & đánh giá tính năng AI Itinerary Generator)
-│  │  │  ├─ ai-feature-spec.md
-│  │  │  ├─ eval-set.json             (30 test case)
-│  │  │  └─ evaluation-result.md      (static validation — NOT EXECUTED vì chưa nối AI provider)
-│  │  └─ story-specs/                 (US-01 … US-10, mỗi story 1 file spec)
-│  │     ├─ US-01-create-trip-request.md
-│  │     ├─ US-02-ai-itinerary.md
-│  │     ├─ US-03-itinerary-builder.md
-│  │     ├─ US-04-policy-check.md
-│  │     ├─ US-05-manager-approve-l1.md
-│  │     ├─ US-06-travel-admin-approve-l2.md
-│  │     ├─ US-07-expense-claim.md
-│  │     ├─ US-08-finance-close.md
-│  │     ├─ US-09-dashboard.md
-│  │     └─ US-10-notification-pdf.md
-│  │
-│  ├─ 06-testing/                     (khung file đã tạo — nội dung sẽ điền ở giai đoạn Testing & QA)
-│  │  ├─ QA_REPORT.md
-│  │  ├─ bug-log.md
-│  │  ├─ code-review.md
-│  │  └─ security-nfr.md
-│  │
-│  ├─ 07-release/                     (khung file đã tạo — nội dung sẽ điền ở giai đoạn Release Engineering)
-│  │  ├─ RUNBOOK.md
-│  │  ├─ RELEASE.md
-│  │  └─ CHANGELOG.md
-│  │
+│  ├─ 06-testing/
+│  ├─ 07-release/          (có RUNBOOK.md)
+│  ├─ 08-quality/
 │  └─ logs/
-│     └─ AI_USAGE_LOG.md              (nhật ký dùng AI — cập nhật liên tục)
-│
 ├─ src/
-│  ├─ frontend/                       (React + Vite + TypeScript + Tailwind CSS v4)
-│  │  ├─ src/
-│  │  │  ├─ App.tsx                   (toàn bộ UI — components, hooks, types)
-│  │  │  ├─ main.tsx
-│  │  │  └─ services/
-│  │  │     ├─ api.ts                 (API client — JWT, auto-refresh, error handling)
-│  │  │     ├─ trips.ts
-│  │  │     ├─ itinerary.ts
-│  │  │     └─ expenses.ts
-│  │  └─ dist/                        (build output — được backend serve tĩnh)
-│  └─ backend/                        (Node.js + Express + TypeScript + Prisma + SQLite)
-│     ├─ src/
-│     │  ├─ server.ts                 (entry point)
-│     │  ├─ app.ts                    (Express setup, routes, static, SPA fallback)
-│     │  ├─ routes/                   (trips, itinerary, expenses, auth, ai, notifications)
-│     │  ├─ controllers/
-│     │  ├─ services/
-│     │  ├─ middlewares/
-│     │  └─ prisma/
-│     │     ├─ schema.prisma
-│     │     ├─ seed.ts
-│     │     └─ dev.db                 (SQLite — local dev)
-│     └─ .env                         (không commit — xem .env.example)
+│  ├─ frontend/
+│  └─ backend/
+│     ├─ .env.example
+│     └─ src/
+├─ tests/
+│  ├─ api/
+│  ├─ e2e/
+│  ├─ integration/
+│  └─ unit/
+└─ package-lock.json
 ```
 
-**Trạng thái theo tuần kế hoạch (Plan Master MIS3032_1):** Discovery/Vault (tuần 1–2), PRD/Prototype/UX (tuần 3), User Stories/Taiga/Figma/Technical Specs (tuần 4) và đặc tả AI feature (tuần 8) đã có nội dung đầy đủ. Backend API và Frontend SPA đã triển khai và kết nối end-to-end. `06-testing/` và `07-release/` là khung thư mục, nội dung thật sẽ bổ sung ở các tuần Testing & QA và Release Engineering.
+## Cách cài đặt
 
-## Team
+Repo khai báo `workspaces` ở `package.json` gốc, nên chỉ cần chạy một lần ở thư mục gốc:
 
-Xem chi tiết phân vai tại [`docs/team-roles.md`](docs/team-roles.md).
+```bash
+npm install
+```
 
-| Vai trò | Thành viên |
-|---|---|
-| Product/BA | Nguyễn Thị Mỹ Nhi |
-| AI/Vault | Nguyễn Ngọc Tuyết Nhi |
-| UX/UI | Hoàng Thị Kim Dung |
-| Engineering | Nguyễn Thị Ánh Tuyết |
-| QA/Release | Hà Gia Bảo Ngọc |
+Lệnh này cài dependency cho root, `src/backend` và `src/frontend`. Không cần `npm install` riêng ở từng package; chỉ dùng `npm --prefix ...` khi muốn gọi script của package đó.
 
-## Cách chạy dự án (local — một cổng duy nhất)
+## Bắt đầu nhanh
 
-Kiến trúc: Express phục vụ cả API lẫn bản build React tại **`localhost:5000`**.
-Không cần Docker, không cần deploy, không cần Vite dev server riêng.
+### 1) Yêu cầu
 
-### Yêu cầu
-
-- **Node.js ≥ 20** — tải tại [nodejs.org](https://nodejs.org/)
-- **npm ≥ 9** (đi kèm Node.js)
+- Node.js 20+
+- npm 9+
+- PostgreSQL 16 hoặc Docker Desktop
 - Git
 
-### Bước 1 — Clone repo
+### 2) Clone repo
 
 ```bash
-git clone https://github.com/mynhi1011/Smart-Travel-Business-Trip-Management-.git
-cd Smart-Travel-Business-Trip-Management-
-```
-
-### Bước 2 — Cài dependencies (nên mở 2 terminal và chạy)
-
-```bash
-# Backend
-cd src/backend
-npm install
-
-# Frontend
-cd src/frontend
+git clone <repo-url>
+cd Smart-Travel-Business-Trip-Management
 npm install
 ```
 
-> **Windows PowerShell:** dùng `cd ..\frontend` (dấu `\` thay vì `/`)
+### 3) Tạo file môi trường backend
 
-### Bước 3 — Tạo file `.env` cho backend
-
-File `.env` không được commit vào repo (chứa secrets). Cần tạo thủ công:
+Sao chép mẫu `src/backend/.env.example` thành `src/backend/.env`:
 
 ```bash
-# macOS / Linux
+# macOS / Linux / Git Bash
+cp src/backend/.env.example src/backend/.env
+
+# Windows PowerShell
+Copy-Item src/backend/.env.example src/backend/.env
+```
+
+Nội dung mẫu:
+
+```env
+PORT=5000
+HOST=0.0.0.0
+NODE_ENV=development
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/smart_travel?schema=public"
+JWT_ACCESS_SECRET=replace_with_a_long_random_string
+JWT_REFRESH_SECRET=replace_with_a_different_long_random_string
+CORS_ORIGIN=http://localhost:5173
+GROQ_API_KEY=your_groq_key_here
+```
+
+> **Quan trọng:** nếu thiếu `.env`, backend dùng giá trị mặc định trong code và chạy ở cổng `3001` thay vì `5000`. Vite proxy trỏ tới `http://localhost:5000`, nên bắt buộc phải có `src/backend/.env` với `PORT=5000`.
+
+### 4) Chuẩn bị PostgreSQL
+
+Cách nhanh nhất bằng Docker:
+
+```bash
+docker run --name smart-travel-db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=smart_travel \
+  -p 5432:5432 \
+  -d postgres:16
+```
+
+Kiểm tra:
+
+```bash
+docker ps
+```
+
+Nếu cần dùng lại container cũ:
+
+```bash
+docker start smart-travel-db
+```
+
+### 5) Khởi tạo schema và seed dữ liệu demo
+
+```bash
 cd src/backend
-cp .env.example .env
-
-# Windows (PowerShell)
-cd src\backend
-copy .env.example .env
+npm run db:setup
 ```
 
-Sau đó mở file `src/backend/.env` bằng bất kỳ text editor nào và **thay 2 dòng JWT** bằng chuỗi bất kỳ (tối thiểu 32 ký tự):
+Lệnh này chạy Prisma migration và seed user demo.
 
-```
-JWT_ACCESS_SECRET=bat-ky-chuoi-nao-dai-hon-32-ky-tu-vd-abcdef1234567890abcdef1234567890
-JWT_REFRESH_SECRET=mot-chuoi-khac-dai-hon-32-ky-tu-vd-1234567890abcdef1234567890abcdef
-```
-
-> Các biến khác (`PORT=5000`, `DATABASE_URL=file:./dev.db`, `NODE_ENV=development`) đã có sẵn giá trị mặc định phù hợp cho dev — không cần đổi.
-
-### Bước 4 — Khởi tạo database và seed dữ liệu mẫu
+Nếu cần reset lại dữ liệu:
 
 ```bash
-# Vẫn ở src/backend/
-npm run db:migrate   # tạo database SQLite + chạy migrations
-npm run db:seed      # tạo tài khoản demo
+npm run db:reset
 ```
 
-### Bước 5 — Build frontend
-
-```bash
-cd src/frontend
-npm run build
-```
-
-Lệnh này tạo thư mục `src/frontend/dist/` — backend sẽ tự serve thư mục này.
-
-### Bước 6 — Chạy server
+### 6) Chạy backend
 
 ```bash
 cd src/backend
 npm run dev
 ```
 
-Kết quả mong đợi:
+Backend chạy ở:
+- API: http://localhost:5000/api/v1
+- Health check: http://localhost:5000/health
 
+### 7) Chạy frontend
+
+Mở một terminal khác:
+
+```bash
+cd src/frontend
+npm run dev
 ```
-{"level":"INFO","message":"Server started","port":5000,...}
-```
 
-Mở trình duyệt tại **[http://localhost:5000](http://localhost:5000)**
+Frontend dev server chạy ở http://localhost:5173. Vite proxy `/api` sang `http://localhost:5000`.
 
----
+### 8) Truy cập ứng dụng
 
-### Tài khoản demo (password: `12345678`)
+Mở trình duyệt tại http://localhost:5173
+
+### 9) Tài khoản demo
+
+Mật khẩu mặc định cho tất cả tài khoản demo: `12345678`
 
 | Email | Vai trò |
 |---|---|
@@ -243,33 +188,47 @@ Mở trình duyệt tại **[http://localhost:5000](http://localhost:5000)**
 | `admin@smarttravel.vn` | Travel Admin |
 | `ketoan@smarttravel.vn` | Finance |
 
----
+## AI integration
 
-### Chạy lại lần sau
+AI itinerary dùng `groq-sdk` với model `openai/gpt-oss-20b` (cấu hình trong `src/backend/src/lib/ai.client.ts`).
 
-Chỉ cần 1 lệnh (từ thư mục `src/backend/`):
+- Cần `GROQ_API_KEY` để sinh lịch trình bằng AI. Nếu thiếu key, tính năng AI không hoạt động.
+- Các chức năng còn lại vẫn chạy bình thường khi không có key.
 
-```bash
-npm run dev
-```
-
-> **Sau khi sửa code frontend**, build lại trước:
-> ```bash
-> cd src/frontend && npm run build
-> ```
-> Backend tự reload nhờ `tsx watch` — không cần restart.
-
----
-
-### Reset dữ liệu về trạng thái ban đầu
+## Chạy theo mode production-like
 
 ```bash
-# Từ src/backend/
-npm run db:reset
+cd src/backend && npm run build
+cd src/backend && npm start
 ```
 
-Lệnh này xóa sạch database và chạy lại seed.
+`npm run build` của backend đã bao gồm bước build frontend. Khi backend chạy ở production mode, frontend build được phục vụ từ `src/frontend/dist`.
 
-## Trạng thái dự án
+## Kiểm tra nhanh
 
-Xem tiến độ và mốc nộp bài tại [`docs/00-project-index.md`](docs/00-project-index.md).
+Chạy từ thư mục gốc:
+
+```bash
+# Backend tests
+npm --prefix src/backend run test:run
+
+# Frontend tests
+npm --prefix src/frontend run test:run
+```
+
+Các script riêng ở `package.json` gốc: `npm run test:unit`, `npm run test:api`, `npm run test:integration` (cần PostgreSQL), `npm run test:e2e` (Playwright, cần cấu hình theo `.env.e2e.example`).
+
+## Tài liệu liên quan
+
+- [docs/00-project-index.md](docs/00-project-index.md)
+- [docs/TRACEABILITY.md](docs/TRACEABILITY.md)
+- [docs/07-release/RUNBOOK.md](docs/07-release/RUNBOOK.md)
+- [docs/02-vault/02-requirements/requirements.md](docs/02-vault/02-requirements/requirements.md)
+
+## Lưu ý cho sinh viên
+
+- Cài đặt chuẩn là ở thư mục gốc theo `workspaces`; không cần `npm install` ở từng package.
+- Nếu thiếu `src/backend/.env`, backend chạy ở cổng `3001` và không khớp với Vite proxy 5000.
+- Nếu sai `DATABASE_URL`, backend không khởi động được.
+- Khi đổi code frontend, reload Vite dev server để thấy thay đổi.
+- Nếu gặp lỗi CORS, kiểm tra `CORS_ORIGIN=http://localhost:5173` và `PORT=5000` trong `src/backend/.env`.
