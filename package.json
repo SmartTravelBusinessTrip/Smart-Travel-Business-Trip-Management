@@ -22,6 +22,7 @@
     "test:integration": "npm --prefix src/backend run test:integration",
     "test:api": "npm --prefix src/backend run test:api",
     "test:e2e": "playwright test --project=chromium",
+    "demo:e2e-01": "node scripts/demo-e2e-01.mjs",
     "test:e2e:list": "playwright test --list --project=chromium",
     "test:fe": "npm --prefix src/frontend run test:run",
     "test:run": "npm run test:be && npm run test:fe",

@@ -124,6 +124,19 @@ Nếu đăng nhập được và thấy dashboard → app đã sẵn sàng.
 
 ## Bước 4 — Chạy E2E tests
 
+### Demo trực tiếp E2E-01 trên Chromium
+
+Lệnh riêng dưới đây mở Chromium có giao diện, chạy duy nhất E2E-01 và làm chậm thao tác để người xem theo dõi. Lệnh dùng URL trong `.env.e2e.local`; xác nhận URL và tài khoản trỏ tới môi trường được phép tạo dữ liệu trước khi chạy. Scenario tạo Trip mới và gửi yêu cầu duyệt.
+
+1. Trong `.env.e2e.local`, xác nhận `BASE_URL` là URL chính thức bạn muốn demo và `E2E_EMPLOYEE_EMAIL` / `E2E_EMPLOYEE_PASSWORD` là tài khoản phù hợp.
+2. Tại terminal, từ thư mục gốc repo chạy:
+
+```powershell
+npm.cmd run demo:e2e-01
+```
+
+Kết quả thành công phải có `1 passed` (không phải `skipped`). Chi tiết report ở `playwright-report/index.html`; Trip đã gửi duyệt được tạo trên hệ thống đích.
+
 Quay lại **cửa sổ PowerShell thứ ba** (hoặc bất kỳ cửa sổ nào không phải terminal đang chạy app).
 
 **Chạy toàn bộ E2E:**
