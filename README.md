@@ -2,7 +2,7 @@
 
 Dự án web quản lý xin đi công tác, phê duyệt, lịch trình, chi phí và báo cáo trong doanh nghiệp. Ứng dụng mô phỏng quy trình từ khi nhân viên tạo trip request đến khi finance đóng hồ sơ và xuất báo cáo.
 
-Nhóm 11 — MIS3032_1
+Nhóm 08 — MIS3032_1
 
 ## Tóm tắt chức năng
 
