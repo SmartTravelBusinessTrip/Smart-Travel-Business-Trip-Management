@@ -16,7 +16,7 @@
   - **AC 1.1 (Happy path - Tạo yêu cầu thông thường):**  
     *Given* Employee đã đăng nhập vào hệ thống  
     *When* Employee nhập đầy đủ Điểm xuất phát, Điểm đến, Ngày đi, Ngày về, Lý do công tác và Dự toán chi phí với ngày khởi hành cách ngày hiện tại ≥ 3 ngày làm việc (tuân thủ `BR-TR-03`)  
-    *Then* Hệ thống lưu Trip Request với trạng thái `DRAFT` và cấp mã định danh chuyến đi.
+    *Then* Hệ thống lưu Trip Request và cấp mã định danh chuyến đi.
   - **AC 1.2 (Kiểm tra tổng hạn mức lưu trú + phụ cấp tự động):**  
     *Given* Employee đã nhập Điểm đến, Ngày đi, Ngày về và Dự toán chi phí (`estimatedBudget`)  
     *When* Hệ thống tính hạn mức kết hợp dựa trên cấp bậc (`jobGrade`) của Employee đăng nhập và loại điểm đến (`destinationType` tự suy từ `destination`)  

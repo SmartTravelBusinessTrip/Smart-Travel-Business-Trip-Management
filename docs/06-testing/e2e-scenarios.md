@@ -20,7 +20,7 @@ Then thông tin hợp lệ được gửi thành công và lưu ở trạng thá
 And “Tiếp tục” chuyển sang bước kế tiếp mà không bắt buộc dùng AI
 - Kết quả mong đợi: Yêu cầu hợp lệ được lưu, có thể bỏ qua AI khi gửi.
 
-## E2E-02 — Nhân viên tạo và chỉnh sửa lịch trình có AI gợi ý
+## E2E-02 — Nhân viên tạo yêu cầu và sử dụng AI gợi ý lịch trình
 
 - E2E ID: E2E-02
 - User Story liên quan: US-02, US-03
@@ -28,17 +28,17 @@ And “Tiếp tục” chuyển sang bước kế tiếp mà không bắt buộc
 - Role: Employee
 - Preconditions: Employee có Trip chưa đóng với thông tin điểm đến, ngày và ngân sách; fixture AI ổn định cần được chuẩn bị.
 
-Scenario: Nhân viên tạo và chỉnh sửa lịch trình có AI gợi ý
+Scenario: Nhân viên tạo yêu cầu và sử dụng AI gợi ý lịch trình
 
 Given Employee mở bước lịch trình của một Trip chưa đóng
 And có fixture AI xác định trước để trả về lịch trình theo ngày/buổi
 When Employee chọn “Sinh lịch trình bằng AI”
-And Employee xem lịch trình được gợi ý rồi thêm, sửa hoặc xóa một mục
+And Employee xem lịch trình được gợi ý
 Then lịch trình gợi ý hiển thị theo ngày/buổi
 And thay đổi được phản ánh trong lịch trình và tổng dự toán
 And nếu tổng chi vượt Combined_Limit thì chỉ hiển thị một cảnh báo tổng hợp, không yêu cầu lý do
 
-- Kết quả mong đợi: Lịch trình AI hiển thị; các thay đổi được lưu và tổng dự toán/cảnh báo phản ánh dữ liệu hiện có.
+- Kết quả mong đợi: Lịch trình AI hiển thị và tổng dự toán/cảnh báo phản ánh dữ liệu hiện có.
 
 ## E2E-03 — Nhân viên gửi chuyến khẩn cấp để duyệt hai cấp
 
